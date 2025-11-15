@@ -20,14 +20,17 @@ const Index = () => {
   const { messages, setMessages, isLoading, sendMessage } = useChat(conversationId);
 
   useEffect(() => {
+    console.log("Setting up auth listener");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
     });
@@ -37,11 +40,15 @@ const Index = () => {
 
   useEffect(() => {
     if (!user) {
+      console.log("No user found, redirecting to auth");
       navigate("/auth");
       return;
     }
 
+    console.log("User authenticated, initializing conversation for:", user.id);
+
     const initConversation = async () => {
+      console.log("Fetching existing conversations...");
       const { data: existingConversations, error: fetchError } = await supabase
         .from("conversations")
         .select("*")
@@ -55,8 +62,11 @@ const Index = () => {
         return;
       }
 
+      console.log("Existing conversations:", existingConversations?.length);
+
       if (existingConversations && existingConversations.length > 0) {
         const conversation = existingConversations[0];
+        console.log("Loading existing conversation:", conversation.id);
         setConversationId(conversation.id);
 
         const { data: existingMessages, error: messagesError } = await supabase
@@ -68,6 +78,7 @@ const Index = () => {
         if (messagesError) {
           console.error("Error fetching messages:", messagesError);
         } else if (existingMessages) {
+          console.log("Loaded messages:", existingMessages.length);
           setMessages(existingMessages.map(msg => ({
             id: msg.id,
             role: msg.role as "user" | "assistant",
@@ -76,6 +87,7 @@ const Index = () => {
           })));
         }
       } else {
+        console.log("Creating new conversation...");
         const { data: newConversation, error: createError } = await supabase
           .from("conversations")
           .insert({ user_id: user.id })
@@ -90,6 +102,7 @@ const Index = () => {
             variant: "destructive",
           });
         } else if (newConversation) {
+          console.log("New conversation created:", newConversation.id);
           setConversationId(newConversation.id);
           
           const welcomeMessage = {
@@ -103,13 +116,14 @@ const Index = () => {
             content: welcomeMessage.content,
           });
           
+          console.log("Welcome message inserted");
           setMessages([welcomeMessage]);
         }
       }
     };
 
     initConversation();
-  }, [user, navigate, toast, setMessages]);
+  }, [user, navigate, toast]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
