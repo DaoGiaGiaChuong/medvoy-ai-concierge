@@ -258,8 +258,107 @@ serve(async (req) => {
               }
             } catch (error) {
               console.error("Tool execution error:", error);
-              const errorMessage = `I apologize, but I encountered an error fetching the cost estimate. Please try again or verify your information.`;
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: errorMessage } }] })}\n\n`));
+              
+              // Fallback: Use Firecrawl + Lovable AI to generate estimate
+              try {
+                console.log("Attempting Firecrawl fallback for:", args);
+                
+                // Define URLs to scrape based on destination
+                const country = args.country || "Thailand";
+                const procedure = args.procedure || "medical procedure";
+                
+                const scrapeSources = [
+                  `https://www.kayak.com/flights/to-${country}`,
+                  `https://www.booking.com/searchresults.html?dest_type=country&dest_id=${country}`,
+                ];
+                
+                // Call Firecrawl function
+                const firecrawlResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/firecrawl-scrape`, {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    urls: scrapeSources,
+                    formats: ["markdown"],
+                  }),
+                });
+                
+                let scrapedData = "No real-time data available";
+                if (firecrawlResponse.ok) {
+                  const firecrawlResult = await firecrawlResponse.json();
+                  scrapedData = JSON.stringify(firecrawlResult.results || []);
+                  console.log("Firecrawl successful, data length:", scrapedData.length);
+                }
+                
+                // Create enhanced prompt with scraped data
+                const fallbackPrompt = `The MedVoy API is currently unavailable. Using your medical tourism knowledge and the following real-time market data, provide a helpful cost estimate for:
+                
+Procedure: ${args.procedure}
+Country: ${args.country}
+Travel Date: ${args.travelDate}
+Budget: ${args.budget}
+Companions: ${args.companions}
+Hotel Type: ${args.hotelType}
+
+Scraped Market Data:
+${scrapedData.substring(0, 5000)}
+
+Please provide:
+1. Estimated procedure cost range based on typical ${args.country} medical tourism prices
+2. Flight cost estimates 
+3. Hotel cost estimates based on ${args.hotelType} accommodation
+4. Total estimated budget range
+5. Important disclaimers that these are approximate estimates
+
+Be honest that the primary API is unavailable, but provide the best guidance possible using your knowledge and any available market data.`;
+
+                // Send to Lovable AI for intelligent processing
+                const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    model: "google/gemini-2.5-flash",
+                    messages: [
+                      { role: "system", content: MEDVOY_SYSTEM_PROMPT },
+                      { role: "user", content: fallbackPrompt }
+                    ],
+                    stream: true,
+                  }),
+                });
+                
+                if (aiResponse.ok && aiResponse.body) {
+                  const aiReader = aiResponse.body.getReader();
+                  let aiBuffer = "";
+                  
+                  while (true) {
+                    const { done, value } = await aiReader.read();
+                    if (done) break;
+                    
+                    aiBuffer += decoder.decode(value, { stream: true });
+                    const aiLines = aiBuffer.split("\n");
+                    aiBuffer = aiLines.pop() || "";
+                    
+                    for (const line of aiLines) {
+                      if (line.startsWith("data: ")) {
+                        controller.enqueue(encoder.encode(`${line}\n\n`));
+                      }
+                    }
+                  }
+                } else {
+                  // Final fallback message
+                  const errorMessage = `I apologize, but I'm having trouble accessing cost data at the moment. Please try again later, or I can provide general guidance about ${args.procedure} in ${args.country} if you'd like.`;
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: errorMessage } }] })}\n\n`));
+                }
+              } catch (fallbackError) {
+                console.error("Fallback error:", fallbackError);
+                const errorMessage = `I apologize, but I'm experiencing technical difficulties. Please try again later.`;
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: errorMessage } }] })}\n\n`));
+              }
             }
           }
           
