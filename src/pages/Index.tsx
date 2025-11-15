@@ -139,6 +139,11 @@ const Index = () => {
     navigate("/auth");
   };
 
+  const handleOptionSelect = async (option: any) => {
+    console.log("Option selected:", option);
+    await sendMessage(option.title);
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -168,7 +173,11 @@ const Index = () => {
 
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message, index) => (
-          <ChatMessage key={message.id || index} message={message} />
+          <ChatMessage 
+            key={message.id || index} 
+            message={message}
+            onSelectOption={handleOptionSelect}
+          />
         ))}
         {isLoading && (
           <div className="flex justify-start">

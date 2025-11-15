@@ -2,11 +2,21 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+export type Option = {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  price?: string;
+  badge?: string;
+};
+
 export type Message = {
   id?: string;
   role: "user" | "assistant";
   content: string;
   created_at?: string;
+  options?: Option[];
 };
 
 export const useChat = (conversationId: string | null) => {
@@ -80,18 +90,23 @@ export const useChat = (conversationId: string | null) => {
             try {
               const parsed = JSON.parse(jsonStr);
               const content = parsed.choices?.[0]?.delta?.content;
+              const options = parsed.choices?.[0]?.delta?.options;
+              
               if (content) {
                 assistantContent += content;
-                setMessages((prev) => {
-                  const lastMessage = prev[prev.length - 1];
-                  if (lastMessage?.role === "assistant") {
-                    return prev.map((m, i) =>
-                      i === prev.length - 1 ? { ...m, content: assistantContent } : m
-                    );
-                  }
-                  return [...prev, { role: "assistant", content: assistantContent }];
-                });
               }
+              
+              setMessages((prev) => {
+                const lastMessage = prev[prev.length - 1];
+                if (lastMessage?.role === "assistant") {
+                  return prev.map((m, i) =>
+                    i === prev.length - 1 
+                      ? { ...m, content: assistantContent, options: options || m.options } 
+                      : m
+                  );
+                }
+                return [...prev, { role: "assistant", content: assistantContent, options }];
+              });
             } catch (parseError) {
               console.error("Parse error:", parseError);
             }
