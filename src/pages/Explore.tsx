@@ -169,7 +169,7 @@ const Explore = () => {
       </div>
 
       {/* Filter Section */}
-      <div className="max-w-7xl mx-auto px-6 -mt-8">
+      <div className="max-w-7xl mx-auto px-6 mt-12">
         <Card className="shadow-lg">
           <CardContent className="p-6">
             <h2 className="text-2xl font-bold mb-2">Find Your Perfect Match</h2>
