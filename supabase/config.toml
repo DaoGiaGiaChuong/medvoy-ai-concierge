@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.firecrawl-scrape]
 verify_jwt = true
+
+[functions.generate-hospital-options]
+verify_jwt = true

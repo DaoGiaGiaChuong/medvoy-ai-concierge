@@ -161,9 +161,27 @@ const Index = () => {
   return (
     <div className="flex flex-col h-screen bg-background">
       <header className="border-b bg-card p-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">MedVoy AI</h1>
-          <p className="text-sm text-muted-foreground">Transparent Medical Tourism</p>
+        <div className="flex items-center gap-6">
+          <div>
+            <h1 className="text-2xl font-bold">MedVoy AI</h1>
+            <p className="text-sm text-muted-foreground">Transparent Medical Tourism</p>
+          </div>
+          <nav className="flex gap-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/")}
+              className="text-sm"
+            >
+              Chat
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/explore")}
+              className="text-sm"
+            >
+              Explore
+            </Button>
+          </nav>
         </div>
         <Button onClick={handleSignOut} variant="outline" size="sm">
           <LogOut className="h-4 w-4 mr-2" />
