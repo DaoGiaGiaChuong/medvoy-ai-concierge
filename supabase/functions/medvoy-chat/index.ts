@@ -49,6 +49,7 @@ Conversation rules:
 - For general questions, answer confidently using your knowledge
 - For specific pricing, always try to use the API first
 - If users ask about medical tourism in general, answer helpfully without requiring the full intake
+- When asking about country preferences, provide top 3 budget-friendly recommendations: Thailand, Mexico, and Turkey
 
 Begin by greeting warmly and asking what procedure they're interested in.`;
 
@@ -157,6 +158,7 @@ serve(async (req) => {
       async start(controller) {
         let buffer = "";
         let toolCall: any = null;
+        let fullResponse = "";
         
         try {
           while (true) {
@@ -188,6 +190,7 @@ serve(async (req) => {
                   
                   // Forward regular content
                   if (delta?.content) {
+                    fullResponse += delta.content;
                     controller.enqueue(encoder.encode(`data: ${data}\n\n`));
                   }
                 } catch (e) {
@@ -360,6 +363,36 @@ Be honest that the primary API is unavailable, but provide the best guidance pos
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: errorMessage } }] })}\n\n`));
               }
             }
+          }
+          
+          // Check if we should provide country options
+          const lowerResponse = fullResponse.toLowerCase();
+          if ((lowerResponse.includes("country") || lowerResponse.includes("destination")) && 
+              (lowerResponse.includes("which") || lowerResponse.includes("where") || lowerResponse.includes("what country"))) {
+            const countryOptions = [
+              {
+                id: "thailand",
+                title: "Thailand",
+                description: "Most affordable with world-class facilities",
+                badge: "Most Popular"
+              },
+              {
+                id: "mexico",
+                title: "Mexico",
+                description: "Close to US, excellent quality and value",
+                badge: "Convenient"
+              },
+              {
+                id: "turkey",
+                title: "Turkey",
+                description: "Growing hub with competitive pricing",
+                badge: "Emerging"
+              }
+            ];
+            
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+              choices: [{ delta: { options: countryOptions } }] 
+            })}\n\n`));
           }
           
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
