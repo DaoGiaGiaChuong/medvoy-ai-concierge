@@ -36,17 +36,17 @@ const Explore = () => {
     setLoading(true);
     try {
       // Call AI to generate hospital suggestions with Freepik images
-      const { data, error } = await supabase.functions.invoke('generate-hospital-options', {
-        body: { procedure, country, priceRange }
+      const { data, error } = await supabase.functions.invoke("generate-hospital-options", {
+        body: { procedure, country, priceRange },
       });
 
       if (error) throw error;
-      
+
       if (data?.hospitals) {
         setHospitals(data.hospitals);
       }
     } catch (error: any) {
-      console.error('Error loading hospitals:', error);
+      console.error("Error loading hospitals:", error);
       // Load demo data as fallback
       setHospitals(getDemoHospitals());
     } finally {
@@ -63,7 +63,7 @@ const Explore = () => {
       priceRange: "mid-range",
       rating: 4.7,
       imageUrl: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800",
-      accreditation: "JCI Accredited"
+      accreditation: "JCI Accredited",
     },
     {
       id: "2",
@@ -73,7 +73,7 @@ const Explore = () => {
       priceRange: "premium",
       rating: 4.9,
       imageUrl: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800",
-      accreditation: "JCI Accredited"
+      accreditation: "JCI Accredited",
     },
     {
       id: "3",
@@ -83,7 +83,7 @@ const Explore = () => {
       priceRange: "budget",
       rating: 4.5,
       imageUrl: "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=800",
-      accreditation: "JCI Accredited"
+      accreditation: "JCI Accredited",
     },
     {
       id: "4",
@@ -93,7 +93,7 @@ const Explore = () => {
       priceRange: "mid-range",
       rating: 4.6,
       imageUrl: "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=800",
-      accreditation: "JCI Accredited"
+      accreditation: "JCI Accredited",
     },
     {
       id: "5",
@@ -103,7 +103,7 @@ const Explore = () => {
       priceRange: "budget",
       rating: 4.4,
       imageUrl: "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?w=800",
-      accreditation: "JCI Accredited"
+      accreditation: "JCI Accredited",
     },
     {
       id: "6",
@@ -113,16 +113,20 @@ const Explore = () => {
       priceRange: "mid-range",
       rating: 4.8,
       imageUrl: "https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=800",
-      accreditation: "JCI Accredited"
-    }
+      accreditation: "JCI Accredited",
+    },
   ];
 
   const getPriceRangeBadgeColor = (range: string) => {
     switch (range) {
-      case "budget": return "bg-green-500";
-      case "mid-range": return "bg-blue-500";
-      case "premium": return "bg-purple-500";
-      default: return "bg-gray-500";
+      case "budget":
+        return "bg-green-500";
+      case "mid-range":
+        return "bg-blue-500";
+      case "premium":
+        return "bg-purple-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
@@ -139,24 +143,22 @@ const Explore = () => {
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 text-white py-20 px-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-5xl font-bold mb-4">
-            Your Global Healthcare Journey Starts Here
-          </h1>
+          <h1 className="text-5xl font-bold mb-4">Your Global Healthcare Journey Starts Here</h1>
           <p className="text-xl mb-8 opacity-90">
             Compare world-class hospitals, estimate costs, and connect with JCI-accredited facilities across the globe.
           </p>
           <div className="flex gap-4">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="bg-white text-blue-600 hover:bg-gray-100"
-              onClick={() => window.scrollTo({ top: 400, behavior: 'smooth' })}
+              onClick={() => window.scrollTo({ top: 400, behavior: "smooth" })}
             >
               Explore Hospitals
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="border-white text-white hover:bg-white/10"
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white text-black hover:bg-white/10"
               onClick={() => navigate("/")}
             >
               <MessageSquare className="mr-2 h-5 w-5" />
@@ -226,10 +228,8 @@ const Explore = () => {
 
       {/* Hospital Grid */}
       <div className="max-w-7xl mx-auto px-6 py-12">
-        <h2 className="text-3xl font-bold mb-8">
-          Available Hospitals ({hospitals.length})
-        </h2>
-        
+        <h2 className="text-3xl font-bold mb-8">Available Hospitals ({hospitals.length})</h2>
+
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -252,7 +252,9 @@ const Explore = () => {
                     alt={hospital.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
-                  <Badge className={`absolute top-3 right-3 ${getPriceRangeBadgeColor(hospital.priceRange)} text-white capitalize`}>
+                  <Badge
+                    className={`absolute top-3 right-3 ${getPriceRangeBadgeColor(hospital.priceRange)} text-white capitalize`}
+                  >
                     {hospital.priceRange}
                   </Badge>
                 </div>
@@ -272,10 +274,7 @@ const Explore = () => {
                       <span className="font-medium">{hospital.rating}</span>
                     </div>
                   </div>
-                  <Button 
-                    className="w-full" 
-                    onClick={() => handleGetEstimate(hospital)}
-                  >
+                  <Button className="w-full" onClick={() => handleGetEstimate(hospital)}>
                     Get Cost Estimate
                   </Button>
                 </CardContent>
