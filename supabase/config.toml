@@ -1,0 +1,4 @@
+project_id = "zieocgcujrmavhnmfihu"
+
+[functions.medvoy-chat]
+verify_jwt = true
