@@ -12,6 +12,7 @@ import { LogOut } from "lucide-react";
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -26,6 +27,7 @@ const Index = () => {
         console.log("Auth state changed:", event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
+        setLoading(false);
       }
     );
 
@@ -33,12 +35,15 @@ const Index = () => {
       console.log("Initial session check:", session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
+    if (loading) return;
+    
     if (!user) {
       console.log("No user found, redirecting to auth");
       navigate("/auth");
@@ -123,7 +128,7 @@ const Index = () => {
     };
 
     initConversation();
-  }, [user, navigate, toast]);
+  }, [user, loading, navigate, toast]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -133,6 +138,16 @@ const Index = () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-lg text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return null;
