@@ -2,3 +2,9 @@ project_id = "zieocgcujrmavhnmfihu"
 
 [functions.medvoy-chat]
 verify_jwt = true
+
+[functions.freepik-search]
+verify_jwt = true
+
+[functions.booking-search]
+verify_jwt = true
