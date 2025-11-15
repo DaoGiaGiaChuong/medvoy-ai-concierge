@@ -7,7 +7,7 @@ import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
 import { useChat } from "@/hooks/useChat";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut } from "lucide-react";
+import { LogOut, RefreshCw } from "lucide-react";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -139,6 +139,52 @@ const Index = () => {
     navigate("/auth");
   };
 
+  const handleRestart = async () => {
+    if (!user) return;
+
+    console.log("Restarting conversation...");
+    
+    // Create new conversation
+    const { data: newConversation, error: createError } = await supabase
+      .from("conversations")
+      .insert({ user_id: user.id })
+      .select()
+      .single();
+
+    if (createError) {
+      console.error("Error creating conversation:", createError);
+      toast({
+        title: "Error",
+        description: "Failed to restart chat",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newConversation) {
+      console.log("New conversation created:", newConversation.id);
+      setConversationId(newConversation.id);
+      
+      const welcomeMessage = {
+        role: "assistant" as const,
+        content: "Welcome to MedVoy! I'm here to help you find transparent, personalized cost estimates for medical travel. To get started, could you tell me what medical procedure you're interested in?",
+      };
+      
+      await supabase.from("messages").insert({
+        conversation_id: newConversation.id,
+        role: "assistant",
+        content: welcomeMessage.content,
+      });
+      
+      setMessages([welcomeMessage]);
+      
+      toast({
+        title: "Chat restarted",
+        description: "Starting a fresh conversation",
+      });
+    }
+  };
+
   const handleOptionSelect = async (option: any) => {
     console.log("Option selected:", option);
     await sendMessage(option.title);
@@ -183,10 +229,16 @@ const Index = () => {
             </Button>
           </nav>
         </div>
-        <Button onClick={handleSignOut} variant="outline" size="sm">
-          <LogOut className="h-4 w-4 mr-2" />
-          Sign Out
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleRestart} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Restart Chat
+          </Button>
+          <Button onClick={handleSignOut} variant="outline" size="sm">
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
