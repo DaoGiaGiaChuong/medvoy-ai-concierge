@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Star, Award, MessageSquare } from "lucide-react";
+import { MapPin, Star, Award, MessageSquare, Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -140,6 +140,42 @@ const Explore = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Navigation Header */}
+      <header className="border-b bg-card p-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <div>
+              <h1 className="text-xl font-bold">MedVoy AI</h1>
+              <p className="text-xs text-muted-foreground">Transparent Medical Tourism</p>
+            </div>
+            <nav className="flex gap-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate("/")}
+                className="text-sm"
+              >
+                Chat
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate("/explore")}
+                className="text-sm"
+              >
+                Explore
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate("/cost-breakdown")}
+                className="text-sm flex items-center gap-2"
+              >
+                <Calculator className="h-4 w-4" />
+                Cost Estimate
+              </Button>
+            </nav>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 text-white py-20 px-6">
         <div className="max-w-7xl mx-auto">
