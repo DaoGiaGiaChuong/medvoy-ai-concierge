@@ -3,14 +3,15 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, AlertCircle, Plane, Hotel, Activity } from "lucide-react";
 
 const CostBreakdown = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Sample data - in real app, this would come from route state or API
-  const estimate = {
+  // Get estimate data from navigation state or use sample data
+  const defaultEstimate = {
     procedure: { low: 3000, high: 8000, name: "Knee Surgery" },
     flights: { low: 3000, high: 6000, name: "Round-trip Flights (2 people)" },
     hotel: { low: 350, high: 1400, name: "Hotel Accommodation (7-14 days)" },
@@ -19,6 +20,34 @@ const CostBreakdown = () => {
     country: "Thailand",
     budget: 5000,
   };
+
+  const passedEstimate = location.state?.estimate;
+  
+  // If estimate data is passed, transform it to match our expected format
+  const estimate = passedEstimate ? {
+    procedure: { 
+      low: passedEstimate.breakdown?.[0] ? parseFloat(passedEstimate.breakdown[0].cost.replace(/[^0-9.-]+/g, "").split('-')[0]) : 3000,
+      high: passedEstimate.breakdown?.[0] ? parseFloat(passedEstimate.breakdown[0].cost.replace(/[^0-9.-]+/g, "").split('-')[1]) : 8000,
+      name: passedEstimate.breakdown?.[0]?.category || "Medical Procedure"
+    },
+    flights: { 
+      low: passedEstimate.breakdown?.[1] ? parseFloat(passedEstimate.breakdown[1].cost.replace(/[^0-9.-]+/g, "").split('-')[0]) : 3000,
+      high: passedEstimate.breakdown?.[1] ? parseFloat(passedEstimate.breakdown[1].cost.replace(/[^0-9.-]+/g, "").split('-')[1]) : 6000,
+      name: passedEstimate.breakdown?.[1]?.category || "Round-trip Flights"
+    },
+    hotel: { 
+      low: passedEstimate.breakdown?.[2] ? parseFloat(passedEstimate.breakdown[2].cost.replace(/[^0-9.-]+/g, "").split('-')[0]) : 350,
+      high: passedEstimate.breakdown?.[2] ? parseFloat(passedEstimate.breakdown[2].cost.replace(/[^0-9.-]+/g, "").split('-')[1]) : 1400,
+      name: passedEstimate.breakdown?.[2]?.category || "Hotel Accommodation"
+    },
+    total: { 
+      low: passedEstimate.totalLow,
+      high: passedEstimate.totalHigh
+    },
+    currency: passedEstimate.currency,
+    country: "Selected Destination",
+    budget: 5000,
+  } : defaultEstimate;
 
   const calculatePercentage = (value: number, total: number) => {
     return (value / total) * 100;

@@ -1,6 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export interface Estimate {
   totalLow: number;
@@ -17,8 +20,14 @@ interface EstimateCardProps {
 }
 
 const EstimateCard = ({ estimate }: EstimateCardProps) => {
+  const navigate = useNavigate();
+
+  const handleViewDetails = () => {
+    navigate("/cost-breakdown", { state: { estimate } });
+  };
+
   return (
-    <Card className="w-full max-w-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20">
+    <Card className="w-full max-w-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20 shadow-lg hover:shadow-xl transition-shadow">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">Cost Estimate</CardTitle>
@@ -54,6 +63,17 @@ const EstimateCard = ({ estimate }: EstimateCardProps) => {
             </div>
           </>
         )}
+        
+        <div className="pt-4">
+          <Button 
+            onClick={handleViewDetails}
+            className="w-full group"
+            size="lg"
+          >
+            View Detailed Breakdown
+            <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
