@@ -218,6 +218,18 @@ serve(async (req) => {
               
               const estimateData = await apiResponse.json();
               
+              // Send the estimate visualization before the AI response
+              const estimateViz = {
+                totalLow: estimateData.min_cost || estimateData.estimate?.low || 0,
+                totalHigh: estimateData.max_cost || estimateData.estimate?.high || 0,
+                currency: "USD",
+                breakdown: estimateData.breakdown || []
+              };
+              
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+                choices: [{ delta: { estimate: estimateViz } }] 
+              })}\n\n`));
+              
               // Send tool result back to AI
               const toolResultMessages = [
                 ...messages,

@@ -1,6 +1,7 @@
 import { Message } from "@/hooks/useChat";
 import { cn } from "@/lib/utils";
 import OptionsGrid from "./OptionsGrid";
+import EstimateCard from "./EstimateCard";
 
 interface ChatMessageProps {
   message: Message;
@@ -25,6 +26,11 @@ const ChatMessage = ({ message, onSelectOption }: ChatMessageProps) => {
           )}
         >
           <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        </div>
+      )}
+      {message.estimate && (
+        <div className="w-full mt-4">
+          <EstimateCard estimate={message.estimate} />
         </div>
       )}
       {message.options && message.options.length > 0 && (
