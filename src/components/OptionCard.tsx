@@ -19,35 +19,42 @@ const OptionCard = ({ option, onSelect }: OptionCardProps) => {
   return (
     <Card
       className={cn(
-        "cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02]",
-        "bg-card border-border"
+        "group cursor-pointer transition-all duration-300",
+        "hover:shadow-xl hover:scale-[1.03] hover:border-primary/50",
+        "active:scale-[0.98]",
+        "bg-card border-2 border-border",
+        "relative overflow-hidden"
       )}
       onClick={() => onSelect?.(option)}
     >
-      <CardContent className="p-0">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <CardContent className="p-0 relative">
         {option.imageUrl && (
           <div className="relative w-full h-40 overflow-hidden rounded-t-lg">
             <img
               src={option.imageUrl}
               alt={option.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
             />
             {option.badge && (
-              <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-medium">
+              <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg">
                 {option.badge}
               </div>
             )}
           </div>
         )}
-        <div className="p-4">
-          <h3 className="font-semibold text-foreground mb-1">{option.title}</h3>
+        <div className="p-5">
+          <h3 className="font-bold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">
+            {option.title}
+          </h3>
           {option.description && (
-            <p className="text-sm text-muted-foreground mb-2">
+            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
               {option.description}
             </p>
           )}
           {option.price && (
-            <p className="text-sm font-medium text-primary">{option.price}</p>
+            <p className="text-base font-semibold text-primary">{option.price}</p>
           )}
         </div>
       </CardContent>
