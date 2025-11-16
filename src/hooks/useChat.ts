@@ -11,12 +11,23 @@ export type Option = {
   badge?: string;
 };
 
+export type Estimate = {
+  totalLow: number;
+  totalHigh: number;
+  currency: string;
+  breakdown?: {
+    category: string;
+    cost: string;
+  }[];
+};
+
 export type Message = {
   id?: string;
   role: "user" | "assistant";
   content: string;
   created_at?: string;
   options?: Option[];
+  estimate?: Estimate;
 };
 
 export const useChat = (conversationId: string | null) => {
@@ -91,6 +102,7 @@ export const useChat = (conversationId: string | null) => {
               const parsed = JSON.parse(jsonStr);
               const content = parsed.choices?.[0]?.delta?.content;
               const options = parsed.choices?.[0]?.delta?.options;
+              const estimate = parsed.choices?.[0]?.delta?.estimate;
               
               if (content) {
                 assistantContent += content;
@@ -101,11 +113,16 @@ export const useChat = (conversationId: string | null) => {
                 if (lastMessage?.role === "assistant") {
                   return prev.map((m, i) =>
                     i === prev.length - 1 
-                      ? { ...m, content: assistantContent, options: options || m.options } 
+                      ? { 
+                          ...m, 
+                          content: assistantContent, 
+                          options: options || m.options,
+                          estimate: estimate || m.estimate 
+                        } 
                       : m
                   );
                 }
-                return [...prev, { role: "assistant", content: assistantContent, options }];
+                return [...prev, { role: "assistant", content: assistantContent, options, estimate }];
               });
             } catch (parseError) {
               console.error("Parse error:", parseError);
