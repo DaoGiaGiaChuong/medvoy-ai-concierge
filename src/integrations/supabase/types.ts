@@ -114,6 +114,81 @@ export type Database = {
           },
         ]
       }
+      hospitals: {
+        Row: {
+          accreditation_info: string | null
+          city: string
+          contact_email: string | null
+          contact_phone: string | null
+          country: string
+          created_at: string
+          description: string | null
+          estimated_cost_high: number | null
+          estimated_cost_low: number | null
+          id: string
+          image_url: string | null
+          is_verified: boolean
+          jci_accredited: boolean
+          location: string
+          name: string
+          price_range: string
+          procedures: string[] | null
+          rating: number | null
+          source_url: string | null
+          specialties: string[] | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          accreditation_info?: string | null
+          city: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          country: string
+          created_at?: string
+          description?: string | null
+          estimated_cost_high?: number | null
+          estimated_cost_low?: number | null
+          id?: string
+          image_url?: string | null
+          is_verified?: boolean
+          jci_accredited?: boolean
+          location: string
+          name: string
+          price_range: string
+          procedures?: string[] | null
+          rating?: number | null
+          source_url?: string | null
+          specialties?: string[] | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          accreditation_info?: string | null
+          city?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          country?: string
+          created_at?: string
+          description?: string | null
+          estimated_cost_high?: number | null
+          estimated_cost_low?: number | null
+          id?: string
+          image_url?: string | null
+          is_verified?: boolean
+          jci_accredited?: boolean
+          location?: string
+          name?: string
+          price_range?: string
+          procedures?: string[] | null
+          rating?: number | null
+          source_url?: string | null
+          specialties?: string[] | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       intake_data: {
         Row: {
           budget: string | null
