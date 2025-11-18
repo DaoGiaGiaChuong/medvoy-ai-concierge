@@ -272,9 +272,18 @@ const Explore = () => {
                       <span className="font-medium">{hospital.rating}</span>
                     </div>
                   </div>
-                  <Button className="w-full" onClick={() => handleGetEstimate(hospital)}>
-                    Get Cost Estimate
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => navigate(`/hospital/${hospital.id}`)}
+                    >
+                      View Details
+                    </Button>
+                    <Button className="flex-1" onClick={() => handleGetEstimate(hospital)}>
+                      Get Estimate
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
