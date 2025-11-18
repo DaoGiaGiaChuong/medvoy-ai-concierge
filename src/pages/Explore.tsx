@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Star, Award, MessageSquare, Home, Search } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { MapPin, Star, Award, MessageSquare, Home, Search, GitCompare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import HospitalComparisonDialog from "@/components/HospitalComparisonDialog";
 
 interface Hospital {
   id: string;
