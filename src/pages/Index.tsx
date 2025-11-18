@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
 import { useChat } from "@/hooks/useChat";
@@ -42,13 +43,7 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
-    if (loading) return;
-    
-    if (!user) {
-      console.log("No user found, redirecting to auth");
-      navigate("/auth");
-      return;
-    }
+    if (loading || !user) return;
 
     console.log("User authenticated, initializing conversation for:", user.id);
 
@@ -111,24 +106,33 @@ const Index = () => {
           setConversationId(newConversation.id);
           
           const welcomeMessage = {
-            role: "assistant" as const,
-            content: "Welcome to MedVoy! I'm here to help you find transparent, personalized cost estimates for medical travel. To get started, could you tell me what medical procedure you're interested in?",
-          };
-          
-          await supabase.from("messages").insert({
             conversation_id: newConversation.id,
             role: "assistant",
-            content: welcomeMessage.content,
-          });
-          
-          console.log("Welcome message inserted");
-          setMessages([welcomeMessage]);
+            content: "Hello! I'm your MedVoy AI assistant. I can help you find the perfect medical facility for your needs. What procedure are you interested in, or how can I assist you today?",
+          };
+
+          const { data: savedMessage, error: messageError } = await supabase
+            .from("messages")
+            .insert(welcomeMessage)
+            .select()
+            .single();
+
+          if (messageError) {
+            console.error("Error creating welcome message:", messageError);
+          } else if (savedMessage) {
+            setMessages([{
+              id: savedMessage.id,
+              role: "assistant",
+              content: savedMessage.content,
+              created_at: savedMessage.created_at,
+            }]);
+          }
         }
       }
     };
 
     initConversation();
-  }, [user, loading, navigate, toast]);
+  }, [user, loading, toast]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -136,7 +140,7 @@ const Index = () => {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate("/auth");
+    navigate("/");
   };
 
   const handleRestart = async () => {
@@ -201,7 +205,25 @@ const Index = () => {
   }
 
   if (!user) {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Card className="max-w-md p-8 text-center">
+          <h2 className="text-2xl font-bold mb-4">Sign In Required</h2>
+          <p className="text-muted-foreground mb-6">
+            Please sign in to start chatting with our AI medical tourism assistant.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button onClick={() => navigate("/auth")} size="lg">
+              Sign In
+            </Button>
+            <Button onClick={() => navigate("/")} variant="outline" size="lg">
+              <Home className="mr-2 h-4 w-4" />
+              Back to Home
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   return (
