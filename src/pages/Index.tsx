@@ -218,22 +218,24 @@ const Index = () => {
               onClick={() => navigate("/")}
               className="text-sm"
             >
-              Chat
+              <Home className="h-4 w-4 mr-2" />
+              Home
             </Button>
             <Button 
               variant="ghost" 
               onClick={() => navigate("/explore")}
               className="text-sm"
             >
+              <Search className="h-4 w-4 mr-2" />
               Explore
             </Button>
             <Button 
               variant="ghost" 
-              onClick={() => navigate("/cost-breakdown")}
+              onClick={() => navigate("/saved-estimates")}
               className="text-sm flex items-center gap-2"
             >
               <Calculator className="h-4 w-4" />
-              Cost Estimate
+              My Estimates
             </Button>
           </nav>
         </div>

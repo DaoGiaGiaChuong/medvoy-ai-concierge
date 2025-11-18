@@ -92,7 +92,7 @@ const SavedEstimates = () => {
 
       if (error) throw error;
 
-      setEstimates(data || []);
+      setEstimates((data || []) as unknown as SavedEstimate[]);
     } catch (error: any) {
       toast({
         title: "Error",
