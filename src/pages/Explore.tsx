@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Star, Award, MessageSquare, Calculator } from "lucide-react";
+import { MapPin, Star, Award, MessageSquare, Calculator, Home, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -132,48 +132,48 @@ const Explore = () => {
 
   const handleGetEstimate = (hospital: Hospital) => {
     toast({
-      title: "Redirecting to AI Concierge",
-      description: `Getting estimate for ${hospital.name}`,
+      title: "Generating Estimate",
+      description: `Creating cost estimate for ${hospital.name}...`,
     });
-    navigate("/");
+    setTimeout(() => {
+      navigate("/cost-breakdown", {
+        state: {
+          hospital: hospital.name,
+          country: hospital.location,
+          procedure: procedure === "all" ? "Medical Procedure" : procedure
+        }
+      });
+    }, 1000);
   };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation Header */}
-      <header className="border-b bg-card p-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div>
-              <h1 className="text-xl font-bold">MedVoy AI</h1>
-              <p className="text-xs text-muted-foreground">Transparent Medical Tourism</p>
-            </div>
-            <nav className="flex gap-4">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate("/")}
-                className="text-sm"
-              >
-                Chat
-              </Button>
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate("/explore")}
-                className="text-sm"
-              >
-                Explore
-              </Button>
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate("/cost-breakdown")}
-                className="text-sm flex items-center gap-2"
-              >
-                <Calculator className="h-4 w-4" />
-                Cost Estimate
-              </Button>
-            </nav>
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-primary cursor-pointer" onClick={() => navigate("/")}>
+            MedVoy AI
+          </h1>
+          <div className="flex gap-4">
+            <Button variant="ghost" onClick={() => navigate("/")}>
+              <Home className="mr-2 h-4 w-4" />
+              Home
+            </Button>
+            <Button variant="ghost" onClick={() => navigate("/explore")}>
+              <Search className="mr-2 h-4 w-4" />
+              Explore
+            </Button>
+            <Button variant="ghost" onClick={() => navigate("/cost-breakdown")}>
+              <Calculator className="mr-2 h-4 w-4" />
+              Cost Estimate
+            </Button>
+            <Button variant="ghost" onClick={() => navigate("/chat")}>
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Chat
+            </Button>
+            <Button onClick={() => navigate("/auth")}>Sign In</Button>
           </div>
-        </div>
+        </nav>
       </header>
 
       {/* Hero Section */}
