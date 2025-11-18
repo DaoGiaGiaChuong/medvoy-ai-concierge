@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Star, Award, MessageSquare, Calculator, Home, Search } from "lucide-react";
+import { MapPin, Star, Award, MessageSquare, Home, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -92,22 +92,6 @@ const Explore = () => {
     }
   };
 
-  const handleGetEstimate = (hospital: Hospital) => {
-    toast({
-      title: "Generating Estimate",
-      description: `Creating cost estimate for ${hospital.name}...`,
-    });
-    setTimeout(() => {
-      navigate("/cost-breakdown", {
-        state: {
-          hospital: hospital.name,
-          country: hospital.location,
-          procedure: procedure === "all" ? "Medical Procedure" : procedure
-        }
-      });
-    }, 1000);
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation Header */}
@@ -124,10 +108,6 @@ const Explore = () => {
             <Button variant="ghost" onClick={() => navigate("/explore")}>
               <Search className="mr-2 h-4 w-4" />
               Explore
-            </Button>
-            <Button variant="ghost" onClick={() => navigate("/cost-breakdown")}>
-              <Calculator className="mr-2 h-4 w-4" />
-              Cost Estimate
             </Button>
             <Button variant="ghost" onClick={() => navigate("/chat")}>
               <MessageSquare className="mr-2 h-4 w-4" />
@@ -280,8 +260,12 @@ const Explore = () => {
                     >
                       View Details
                     </Button>
-                    <Button className="flex-1" onClick={() => navigate("/")}>
-                      Get AI Estimate
+                    <Button 
+                      className="flex-1"
+                      onClick={() => navigate(`/chat?hospital=${encodeURIComponent(hospital.name)}`)}
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Ask AI
                     </Button>
                   </div>
                 </CardContent>
