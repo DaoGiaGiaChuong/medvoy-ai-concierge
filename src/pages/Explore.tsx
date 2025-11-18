@@ -280,8 +280,8 @@ const Explore = () => {
                     >
                       View Details
                     </Button>
-                    <Button className="flex-1" onClick={() => handleGetEstimate(hospital)}>
-                      Get Estimate
+                    <Button className="flex-1" onClick={() => navigate("/")}>
+                      Get AI Estimate
                     </Button>
                   </div>
                 </CardContent>

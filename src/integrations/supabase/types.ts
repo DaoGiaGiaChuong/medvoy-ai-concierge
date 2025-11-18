@@ -73,6 +73,54 @@ export type Database = {
           },
         ]
       }
+      customer_inquiries: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          email: string
+          hospital_id: string | null
+          id: string
+          inquiry_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          email: string
+          hospital_id?: string | null
+          id?: string
+          inquiry_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          email?: string
+          hospital_id?: string | null
+          id?: string
+          inquiry_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_inquiries_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_inquiries_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hospital_matches: {
         Row: {
           accreditation: string | null
@@ -268,6 +316,104 @@ export type Database = {
           },
         ]
       }
+      patient_reviews: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          helpful_count: number
+          hospital_id: string
+          id: string
+          is_verified: boolean
+          rating: number
+          review_status: Database["public"]["Enums"]["review_status"]
+          review_text: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          helpful_count?: number
+          hospital_id: string
+          id?: string
+          is_verified?: boolean
+          rating: number
+          review_status?: Database["public"]["Enums"]["review_status"]
+          review_text: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          helpful_count?: number
+          hospital_id?: string
+          id?: string
+          is_verified?: boolean
+          rating?: number
+          review_status?: Database["public"]["Enums"]["review_status"]
+          review_text?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "verified_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_reviews_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      verified_bookings: {
+        Row: {
+          booking_date: string
+          booking_status: Database["public"]["Enums"]["booking_status"]
+          created_at: string
+          hospital_id: string
+          id: string
+          procedure_type: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          booking_date: string
+          booking_status?: Database["public"]["Enums"]["booking_status"]
+          created_at?: string
+          hospital_id: string
+          id?: string
+          procedure_type?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          booking_date?: string
+          booking_status?: Database["public"]["Enums"]["booking_status"]
+          created_at?: string
+          hospital_id?: string
+          id?: string
+          procedure_type?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verified_bookings_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -276,7 +422,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      booking_status: "pending" | "confirmed" | "completed" | "cancelled"
+      review_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -403,6 +550,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      booking_status: ["pending", "confirmed", "completed", "cancelled"],
+      review_status: ["pending", "approved", "rejected"],
+    },
   },
 } as const

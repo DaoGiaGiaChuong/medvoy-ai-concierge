@@ -50,36 +50,10 @@ const HospitalDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [hospital, setHospital] = useState<Hospital | null>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
-
-  // Mock reviews - in production, these would come from database
-  const mockReviews: Review[] = [
-    {
-      id: "1",
-      patient_name: "Sarah M.",
-      rating: 5,
-      procedure: "Knee Replacement",
-      comment: "Exceptional care from start to finish. The medical team was highly professional and the facility was world-class. Recovery went smoothly thanks to their excellent post-op care.",
-      date: "2024-01-15"
-    },
-    {
-      id: "2",
-      patient_name: "John D.",
-      rating: 4.5,
-      procedure: "Cardiac Surgery",
-      comment: "Great experience overall. The doctors were very knowledgeable and the nursing staff was attentive. The only minor issue was communication delays, but otherwise highly recommended.",
-      date: "2024-02-20"
-    },
-    {
-      id: "3",
-      patient_name: "Maria L.",
-      rating: 5,
-      procedure: "Cosmetic Surgery",
-      comment: "Couldn't be happier with the results! The surgeon exceeded my expectations and the entire process was smooth. The hospital's international patient coordinator was incredibly helpful.",
-      date: "2024-03-10"
-    }
-  ];
 
   // Mock doctors - in production, these would come from database
   const mockDoctors = [
@@ -117,6 +91,29 @@ const HospitalDetail = () => {
 
   useEffect(() => {
     loadHospital();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!id) return;
+
+      setReviewsLoading(true);
+      const { data, error } = await supabase
+        .from("patient_reviews")
+        .select("*, verified_bookings(procedure_type)")
+        .eq("hospital_id", id)
+        .eq("review_status", "approved")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching reviews:", error);
+      } else {
+        setReviews(data || []);
+      }
+      setReviewsLoading(false);
+    };
+
+    fetchReviews();
   }, [id]);
 
   const loadHospital = async () => {
@@ -349,27 +346,52 @@ const HospitalDetail = () => {
                 <div className="space-y-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Patient Reviews</CardTitle>
+                      <CardTitle>
+                        Patient Reviews
+                        {reviews.length > 0 && (
+                          <span className="ml-2 text-sm font-normal text-muted-foreground">
+                            ({reviews.length} reviews)
+                          </span>
+                        )}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                      {mockReviews.map((review) => (
-                        <div key={review.id} className="border-b last:border-b-0 pb-6 last:pb-0">
-                          <div className="flex items-center justify-between mb-2">
-                            <div>
-                              <p className="font-semibold">{review.patient_name}</p>
-                              <p className="text-sm text-muted-foreground">{review.procedure}</p>
+                      {reviewsLoading ? (
+                        <p className="text-muted-foreground text-center py-8">Loading reviews...</p>
+                      ) : reviews.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">
+                          No reviews yet. Be the first to share your experience!
+                        </p>
+                      ) : (
+                        reviews.map((review) => (
+                          <div key={review.id} className="border-b last:border-b-0 pb-6 last:pb-0">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <p className="font-semibold">Anonymous Patient</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {review.verified_bookings?.procedure_type || "Medical Procedure"} • 
+                                  {new Date(review.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center">
+                                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
+                                  <span className="font-medium">{review.rating}</span>
+                                </div>
+                                {review.is_verified && (
+                                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                                    Verified
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
-                            <div className="flex items-center">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
-                              <span className="font-medium">{review.rating}</span>
-                            </div>
+                            <p className="text-muted-foreground mb-2">{review.review_text}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(review.created_at).toLocaleDateString()}
+                            </p>
                           </div>
-                          <p className="text-muted-foreground mb-2">{review.comment}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(review.date).toLocaleDateString()}
-                          </p>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </CardContent>
                   </Card>
                 </div>
