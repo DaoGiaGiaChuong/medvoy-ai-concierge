@@ -13,7 +13,6 @@ import About from "./pages/About";
 import Resources from "./pages/Resources";
 import Support from "./pages/Support";
 import AdminDashboard from "./pages/AdminDashboard";
-import SavedEstimates from "./pages/SavedEstimates";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,7 +34,6 @@ const App = () => (
           <Route path="/support" element={<Support />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/saved-estimates" element={<SavedEstimates />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -7,7 +7,7 @@ import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
 import { useChat } from "@/hooks/useChat";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, RefreshCw, Calculator, Home, Search } from "lucide-react";
+import { LogOut, RefreshCw, Home, Search } from "lucide-react";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -228,14 +228,6 @@ const Index = () => {
             >
               <Search className="h-4 w-4 mr-2" />
               Explore
-            </Button>
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate("/saved-estimates")}
-              className="text-sm flex items-center gap-2"
-            >
-              <Calculator className="h-4 w-4" />
-              My Estimates
             </Button>
           </nav>
         </div>

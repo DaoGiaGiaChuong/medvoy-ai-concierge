@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { MessageSquare, Search, Shield, Award, Globe, DollarSign, Calendar, Plane, ChevronDown } from "lucide-react";
+import { MessageSquare, Search, Shield, Award, Globe, DollarSign, Calendar, Plane } from "lucide-react";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -60,25 +60,6 @@ const Home = () => {
             </Button>
             <Button variant="ghost" onClick={() => navigate("/chat")}>
               Chat
-            </Button>
-            <Button variant="ghost" onClick={() => navigate("/saved-estimates")}>
-              My Estimates
-            </Button>
-            <div className="relative group">
-              <Button variant="ghost">
-                Resources <ChevronDown className="ml-1 h-4 w-4" />
-              </Button>
-              <div className="absolute top-full left-0 mt-1 bg-background border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                <Button variant="ghost" className="w-full justify-start" onClick={() => navigate("/resources")}>
-                  Resource Hub
-                </Button>
-                <Button variant="ghost" className="w-full justify-start" onClick={() => navigate("/support")}>
-                  Support / FAQ
-                </Button>
-              </div>
-            </div>
-            <Button variant="ghost" onClick={() => navigate("/how-it-works")}>
-              How It Works
             </Button>
             <Button onClick={() => navigate("/auth")}>Sign In</Button>
           </div>
