@@ -27,6 +27,7 @@ const Explore = () => {
   const [procedure, setProcedure] = useState<string>("all");
   const [country, setCountry] = useState<string>("all");
   const [priceRange, setPriceRange] = useState<string>("all");
+  const [expandedHospital, setExpandedHospital] = useState<string | null>(null);
 
   useEffect(() => {
     loadHospitals();
@@ -222,55 +223,86 @@ const Explore = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {hospitals.map((hospital) => (
-              <Card key={hospital.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 group">
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={hospital.imageUrl}
-                    alt={hospital.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                  <Badge
-                    className={`absolute top-3 right-3 ${getPriceRangeBadgeColor(hospital.priceRange)} text-white capitalize`}
-                  >
-                    {hospital.priceRange}
-                  </Badge>
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-bold text-lg mb-2">{hospital.name}</h3>
-                  <div className="flex items-center text-muted-foreground text-sm mb-2">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    {hospital.location}
-                  </div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Award className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">{hospital.accreditation}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-medium">{hospital.rating}</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => navigate(`/hospital/${hospital.id}`)}
+            {hospitals.map((hospital) => {
+              const isExpanded = expandedHospital === hospital.id;
+              
+              return (
+                <Card key={hospital.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 group">
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={hospital.imageUrl}
+                      alt={hospital.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                    <Badge
+                      className={`absolute top-3 right-3 ${getPriceRangeBadgeColor(hospital.priceRange)} text-white capitalize`}
                     >
-                      View Details
-                    </Button>
-                    <Button 
-                      className="flex-1"
-                      onClick={() => navigate(`/chat?hospital=${encodeURIComponent(hospital.name)}`)}
-                    >
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Ask AI
-                    </Button>
+                      {hospital.priceRange}
+                    </Badge>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                  <CardContent className="p-4">
+                    <h3 className="font-bold text-lg mb-2">{hospital.name}</h3>
+                    <div className="flex items-center text-muted-foreground text-sm mb-2">
+                      <MapPin className="h-4 w-4 mr-1" />
+                      {hospital.location}
+                    </div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Award className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium">{hospital.accreditation}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-medium">{hospital.rating}</span>
+                      </div>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
+                        <div>
+                          <h4 className="font-semibold text-sm mb-1">Location</h4>
+                          <p className="text-sm text-muted-foreground">{hospital.location}, {hospital.country}</p>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm mb-1">Accreditation</h4>
+                          <p className="text-sm text-muted-foreground">{hospital.accreditation}</p>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm mb-1">Rating</h4>
+                          <div className="flex items-center gap-1">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="text-sm font-medium">{hospital.rating} / 5.0</span>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm mb-1">Price Range</h4>
+                          <Badge className={`${getPriceRangeBadgeColor(hospital.priceRange)} text-white capitalize`}>
+                            {hospital.priceRange}
+                          </Badge>
+                        </div>
+                        <Button 
+                          className="w-full mt-2"
+                          onClick={() => navigate(`/chat?hospital=${encodeURIComponent(hospital.name)}`)}
+                        >
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Ask AI About This Hospital
+                        </Button>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => setExpandedHospital(isExpanded ? null : hospital.id)}
+                      >
+                        {isExpanded ? "Hide Details" : "View Details"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
