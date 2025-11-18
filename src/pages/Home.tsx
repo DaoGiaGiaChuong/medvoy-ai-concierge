@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { MessageSquare, Calculator, Search, Shield, Award, Globe, DollarSign, Calendar, Plane, ChevronDown } from "lucide-react";
+import { MessageSquare, Search, Shield, Award, Globe, DollarSign, Calendar, Plane, ChevronDown } from "lucide-react";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -57,9 +57,6 @@ const Home = () => {
           <div className="hidden md:flex gap-4 items-center">
             <Button variant="ghost" onClick={() => navigate("/explore")}>
               Explore
-            </Button>
-            <Button variant="ghost" onClick={() => navigate("/cost-breakdown")}>
-              Cost Estimate
             </Button>
             <Button variant="ghost" onClick={() => navigate("/chat")}>
               Chat
@@ -248,9 +245,6 @@ const Home = () => {
               <div className="flex flex-col gap-2">
                 <Button variant="link" className="justify-start p-0 h-auto" onClick={() => navigate("/explore")}>
                   Explore Hospitals
-                </Button>
-                <Button variant="link" className="justify-start p-0 h-auto" onClick={() => navigate("/cost-breakdown")}>
-                  Cost Estimate
                 </Button>
                 <Button variant="link" className="justify-start p-0 h-auto" onClick={() => navigate("/chat")}>
                   AI Chat
