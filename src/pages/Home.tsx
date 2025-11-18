@@ -61,6 +61,9 @@ const Home = () => {
             <Button variant="ghost" onClick={() => navigate("/chat")}>
               Chat
             </Button>
+            <Button variant="ghost" onClick={() => navigate("/saved-estimates")}>
+              My Estimates
+            </Button>
             <div className="relative group">
               <Button variant="ghost">
                 Resources <ChevronDown className="ml-1 h-4 w-4" />

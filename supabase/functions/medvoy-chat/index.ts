@@ -169,7 +169,7 @@ serve(async (req) => {
                         const args = JSON.parse(toolCall.function.arguments);
                         
                         // Generate cost estimates based on procedure and destination
-                        const dashboard = await generateCostEstimate(args);
+                        const dashboard = await generateCostEstimate(args, conversationId);
                         
                         // Send dashboard data through the stream
                         const dashboardEvent = {
@@ -219,7 +219,7 @@ serve(async (req) => {
   }
 });
 
-async function generateCostEstimate(args: any) {
+async function generateCostEstimate(args: any, conversationId: string) {
   const { procedure, destination, companions, duration } = args;
   
   // Search for real cost data
@@ -251,7 +251,7 @@ async function generateCostEstimate(args: any) {
   const costRanges = getCostRangesByProcedure(procedure, destination);
   const totalCompanions = companions + 1; // Include the patient
   
-  return {
+  const estimateData = {
     procedure,
     destination,
     duration,
@@ -266,6 +266,35 @@ async function generateCostEstimate(args: any) {
       high: costRanges.procedure.high + (costRanges.flightPerPerson.high * totalCompanions) + costRanges.hotel.high
     }
   };
+
+  // Save to database
+  try {
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      await fetch(`${SUPABASE_URL}/rest/v1/cost_estimates`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_SERVICE_ROLE_KEY,
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify({
+          conversation_id: conversationId,
+          estimate_low: estimateData.totalCost.low,
+          estimate_high: estimateData.totalCost.high,
+          breakdown: estimateData
+        })
+      });
+      console.log("Cost estimate saved to database");
+    }
+  } catch (e) {
+    console.error("Error saving cost estimate:", e);
+  }
+  
+  return estimateData;
 }
 
 function getCostRangesByProcedure(procedure: string, destination: string) {
