@@ -8,7 +8,7 @@ import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
 import { useChat } from "@/hooks/useChat";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, RefreshCw, Home, Search } from "lucide-react";
+import { LogOut, RefreshCw, Home, Search, User as UserIcon } from "lucide-react";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -250,6 +250,14 @@ const Index = () => {
             >
               <Search className="h-4 w-4 mr-2" />
               Explore
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/profile")}
+              className="text-sm"
+            >
+              <UserIcon className="h-4 w-4 mr-2" />
+              Profile
             </Button>
           </nav>
         </div>
