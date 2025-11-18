@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Message } from "@/hooks/useChat";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 import OptionsGrid from "./OptionsGrid";
-import EstimateCard from "./EstimateCard";
-import ConsultationDialog from "./ConsultationDialog";
 import { Option } from "./OptionCard";
 
 interface ChatMessageProps {
@@ -12,22 +11,15 @@ interface ChatMessageProps {
 }
 
 const ChatMessage = ({ message, conversationId }: ChatMessageProps) => {
-  const [consultationOpen, setConsultationOpen] = useState(false);
-  const [selectedHospital, setSelectedHospital] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
+  const navigate = useNavigate();
 
   const handleOptionSelect = (option: Option) => {
     // Check if this is a hospital option (has id that looks like a UUID)
     const isHospital = option.id.length > 10 && option.id.includes("-");
     
     if (isHospital) {
-      setSelectedHospital({
-        id: option.id,
-        name: option.title,
-      });
-      setConsultationOpen(true);
+      // Navigate to hospital detail page
+      navigate(`/hospital/${option.id}`);
     }
   };
 
@@ -50,11 +42,6 @@ const ChatMessage = ({ message, conversationId }: ChatMessageProps) => {
           <p className="whitespace-pre-wrap break-words">{message.content}</p>
         </div>
       )}
-      {message.estimate && (
-        <div className="w-full mt-4">
-          <EstimateCard estimate={message.estimate} />
-        </div>
-      )}
       {message.options && message.options.length > 0 && (
         <div className="w-full mt-2">
           <OptionsGrid
@@ -62,16 +49,6 @@ const ChatMessage = ({ message, conversationId }: ChatMessageProps) => {
             onSelectOption={handleOptionSelect}
           />
         </div>
-      )}
-      
-      {selectedHospital && (
-        <ConsultationDialog
-          open={consultationOpen}
-          onOpenChange={setConsultationOpen}
-          hospitalId={selectedHospital.id}
-          hospitalName={selectedHospital.name}
-          conversationId={conversationId}
-        />
       )}
     </div>
   );
