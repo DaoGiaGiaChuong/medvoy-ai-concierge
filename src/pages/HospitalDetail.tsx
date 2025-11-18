@@ -54,6 +54,15 @@ const HospitalDetail = () => {
   const [loading, setLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+  }, []);
 
   // Mock doctors - in production, these would come from database
   const mockDoctors = [
@@ -404,7 +413,22 @@ const HospitalDetail = () => {
                     <CardTitle>Contact Information</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {hospital.contact_email && (
+                    {!isAuthenticated && (
+                      <div className="bg-muted p-4 rounded-lg mb-4">
+                        <p className="text-sm text-muted-foreground mb-3">
+                          To protect hospital contact information, please use our inquiry form to get in touch. 
+                          We'll connect you directly with the hospital.
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setActiveTab("overview")}
+                          className="w-full"
+                        >
+                          Use Inquiry Form
+                        </Button>
+                      </div>
+                    )}
+                    {isAuthenticated && hospital.contact_email && (
                       <div className="flex items-center gap-3">
                         <Mail className="h-5 w-5 text-primary" />
                         <a href={`mailto:${hospital.contact_email}`} className="text-primary hover:underline">
@@ -412,7 +436,7 @@ const HospitalDetail = () => {
                         </a>
                       </div>
                     )}
-                    {hospital.contact_phone && (
+                    {isAuthenticated && hospital.contact_phone && (
                       <div className="flex items-center gap-3">
                         <Phone className="h-5 w-5 text-primary" />
                         <a href={`tel:${hospital.contact_phone}`} className="text-primary hover:underline">
