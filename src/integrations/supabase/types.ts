@@ -373,6 +373,68 @@ export type Database = {
           },
         ]
       }
+      user_favorites: {
+        Row: {
+          created_at: string
+          hospital_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hospital_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hospital_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_favorites_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_preferences: {
+        Row: {
+          budget_range: string | null
+          created_at: string
+          id: string
+          notifications_enabled: boolean | null
+          preferred_countries: string[] | null
+          preferred_procedures: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget_range?: string | null
+          created_at?: string
+          id?: string
+          notifications_enabled?: boolean | null
+          preferred_countries?: string[] | null
+          preferred_procedures?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget_range?: string | null
+          created_at?: string
+          id?: string
+          notifications_enabled?: boolean | null
+          preferred_countries?: string[] | null
+          preferred_procedures?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

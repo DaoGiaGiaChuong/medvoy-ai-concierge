@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Star, Award, MessageSquare, Home, Search } from "lucide-react";
+import { MapPin, Star, Award, MessageSquare, Home, Search, Heart, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 
 interface Hospital {
   id: string;
@@ -28,6 +29,28 @@ const Explore = () => {
   const [country, setCountry] = useState<string>("all");
   const [priceRange, setPriceRange] = useState<string>("all");
   const [expandedHospital, setExpandedHospital] = useState<string | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [favorites, setFavorites] = useState<string[]>([]);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadFavorites();
+    }
+  }, [user]);
 
   useEffect(() => {
     loadHospitals();
@@ -79,6 +102,72 @@ const Explore = () => {
     }
   };
 
+  const loadFavorites = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("user_favorites")
+      .select("hospital_id")
+      .eq("user_id", user.id);
+
+    if (!error && data) {
+      setFavorites(data.map(f => f.hospital_id));
+    }
+  };
+
+  const toggleFavorite = async (hospitalId: string) => {
+    if (!user) {
+      toast({
+        title: "Sign In Required",
+        description: "Please sign in to save favorites",
+      });
+      navigate("/auth");
+      return;
+    }
+
+    const isFavorite = favorites.includes(hospitalId);
+
+    if (isFavorite) {
+      const { error } = await supabase
+        .from("user_favorites")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("hospital_id", hospitalId);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to remove favorite",
+          variant: "destructive",
+        });
+      } else {
+        setFavorites(favorites.filter(id => id !== hospitalId));
+        toast({
+          title: "Removed",
+          description: "Hospital removed from favorites",
+        });
+      }
+    } else {
+      const { error } = await supabase
+        .from("user_favorites")
+        .insert({ user_id: user.id, hospital_id: hospitalId });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to add favorite",
+          variant: "destructive",
+        });
+      } else {
+        setFavorites([...favorites, hospitalId]);
+        toast({
+          title: "Added",
+          description: "Hospital added to favorites",
+        });
+      }
+    }
+  };
+
 
   const getPriceRangeBadgeColor = (range: string) => {
     switch (range) {
@@ -114,7 +203,14 @@ const Explore = () => {
               <MessageSquare className="mr-2 h-4 w-4" />
               Chat
             </Button>
-            <Button onClick={() => navigate("/auth")}>Sign In</Button>
+            {user ? (
+              <Button variant="ghost" onClick={() => navigate("/profile")}>
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </Button>
+            ) : (
+              <Button onClick={() => navigate("/auth")}>Sign In</Button>
+            )}
           </div>
         </nav>
       </header>
@@ -297,6 +393,16 @@ const Explore = () => {
                         onClick={() => setExpandedHospital(isExpanded ? null : hospital.id)}
                       >
                         {isExpanded ? "Hide Details" : "View Details"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => toggleFavorite(hospital.id)}
+                        className={favorites.includes(hospital.id) ? "text-red-500" : ""}
+                      >
+                        <Heart
+                          className={`h-4 w-4 ${favorites.includes(hospital.id) ? "fill-red-500" : ""}`}
+                        />
                       </Button>
                     </div>
                   </CardContent>
