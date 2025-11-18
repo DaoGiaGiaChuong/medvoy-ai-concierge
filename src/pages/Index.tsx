@@ -254,7 +254,7 @@ const Index = () => {
           <ChatMessage 
             key={message.id || index} 
             message={message}
-            onSelectOption={handleOptionSelect}
+            conversationId={conversationId}
           />
         ))}
         {isLoading && (
