@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import OptionsGrid from "./OptionsGrid";
 import { Option } from "./OptionCard";
+import CostDashboard from "./CostDashboard";
 
 interface ChatMessageProps {
   message: Message;
@@ -48,6 +49,11 @@ const ChatMessage = ({ message, conversationId }: ChatMessageProps) => {
             options={message.options}
             onSelectOption={handleOptionSelect}
           />
+        </div>
+      )}
+      {message.dashboard && (
+        <div className="w-full mt-2">
+          <CostDashboard data={message.dashboard} conversationId={conversationId} />
         </div>
       )}
     </div>

@@ -11,12 +11,23 @@ export type Option = {
   badge?: string;
 };
 
+export type CostDashboard = {
+  procedure: string;
+  destination: string;
+  procedureCost: { low: number; high: number };
+  flightCost: { low: number; high: number };
+  hotelCost: { low: number; high: number };
+  totalCost: { low: number; high: number };
+  duration: string;
+};
+
 export type Message = {
   id?: string;
   role: "user" | "assistant";
   content: string;
   created_at?: string;
   options?: Option[];
+  dashboard?: CostDashboard;
 };
 
 export const useChat = (conversationId: string | null) => {
@@ -91,6 +102,7 @@ export const useChat = (conversationId: string | null) => {
               const parsed = JSON.parse(jsonStr);
               const content = parsed.choices?.[0]?.delta?.content;
               const options = parsed.choices?.[0]?.delta?.options;
+              const dashboard = parsed.choices?.[0]?.delta?.dashboard;
               
               if (content) {
                 assistantContent += content;
@@ -104,12 +116,13 @@ export const useChat = (conversationId: string | null) => {
                       ? { 
                           ...m, 
                           content: assistantContent, 
-                          options: options || m.options
+                          options: options || m.options,
+                          dashboard: dashboard || m.dashboard
                         } 
                       : m
                   );
                 }
-                return [...prev, { role: "assistant", content: assistantContent, options }];
+                return [...prev, { role: "assistant", content: assistantContent, options, dashboard }];
               });
             } catch (parseError) {
               console.error("Parse error:", parseError);
