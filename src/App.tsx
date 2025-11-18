@@ -7,7 +7,6 @@ import Home from "./pages/Home";
 import Index from "./pages/Index";
 import Explore from "./pages/Explore";
 import HospitalDetail from "./pages/HospitalDetail";
-import CostBreakdown from "./pages/CostBreakdown";
 import Auth from "./pages/Auth";
 import HowItWorks from "./pages/HowItWorks";
 import About from "./pages/About";
@@ -28,7 +27,6 @@ const App = () => (
           <Route path="/chat" element={<Index />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/hospital/:id" element={<HospitalDetail />} />
-          <Route path="/cost-breakdown" element={<CostBreakdown />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/about" element={<About />} />
           <Route path="/resources" element={<Resources />} />
