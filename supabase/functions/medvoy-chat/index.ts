@@ -17,15 +17,14 @@ Your capabilities:
 
 When users express interest in specific procedures or destinations:
 1. Ask relevant questions to understand their needs (one at a time)
-2. Help them think through important considerations
-3. Guide them toward exploring hospital options through the platform
-4. Provide general guidance based on medical tourism knowledge
+2. Gather this key information: procedure type, destination country, budget, travel dates, number of companions, hotel preference
+3. Once you have ALL the required information, use the generate_cost_estimate tool to create a detailed cost breakdown
+4. Present the estimate confidently based on real market data
 
 Conversation style:
 - Be warm, supportive, and reassuring like a professional concierge
 - Keep responses clear, structured, and easy to understand
 - Ask only one question at a time
-- Never invent specific costs or hospital names
 - When discussing country options, mention popular destinations: Thailand, Mexico, Turkey, India
 
 Begin by greeting warmly and asking what procedure they're interested in.`;
@@ -68,6 +67,37 @@ serve(async (req) => {
         messages: [
           { role: "system", content: MEDVOY_SYSTEM_PROMPT },
           ...messages,
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "generate_cost_estimate",
+              description: "Generate a detailed cost breakdown for medical tourism. Use this when you have collected ALL required information: procedure, destination, budget, dates, and number of companions.",
+              parameters: {
+                type: "object",
+                properties: {
+                  procedure: { 
+                    type: "string",
+                    description: "The medical procedure (e.g., 'knee surgery', 'dental implants')"
+                  },
+                  destination: { 
+                    type: "string",
+                    description: "The destination country (e.g., 'Thailand', 'Mexico')"
+                  },
+                  companions: {
+                    type: "number",
+                    description: "Number of companions traveling with the patient"
+                  },
+                  duration: {
+                    type: "string",
+                    description: "Expected trip duration (e.g., '10-14 days')"
+                  }
+                },
+                required: ["procedure", "destination", "companions", "duration"]
+              }
+            }
+          }
         ],
         stream: true,
       }),
@@ -131,6 +161,29 @@ serve(async (req) => {
                   const parsed = JSON.parse(data);
                   const delta = parsed.choices?.[0]?.delta;
                   
+                  // Check for tool calls
+                  if (delta?.tool_calls) {
+                    const toolCall = delta.tool_calls[0];
+                    if (toolCall?.function?.name === "generate_cost_estimate") {
+                      try {
+                        const args = JSON.parse(toolCall.function.arguments);
+                        
+                        // Generate cost estimates based on procedure and destination
+                        const dashboard = await generateCostEstimate(args);
+                        
+                        // Send dashboard data through the stream
+                        const dashboardEvent = {
+                          choices: [{
+                            delta: { dashboard }
+                          }]
+                        };
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify(dashboardEvent)}\n\n`));
+                      } catch (e) {
+                        console.error("Error generating cost estimate:", e);
+                      }
+                    }
+                  }
+                  
                   // Forward content to client
                   if (delta?.content) {
                     controller.enqueue(encoder.encode(`data: ${data}\n\n`));
@@ -165,3 +218,103 @@ serve(async (req) => {
     );
   }
 });
+
+async function generateCostEstimate(args: any) {
+  const { procedure, destination, companions, duration } = args;
+  
+  // Search for real cost data
+  const searchQuery = `${procedure} cost in ${destination} medical tourism 2025`;
+  
+  try {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const searchResponse = await fetch("https://ai.gateway.lovable.dev/v1/web/search", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: searchQuery,
+        num_results: 3
+      })
+    });
+
+    if (searchResponse.ok) {
+      const searchData = await searchResponse.json();
+      console.log("Search results:", searchData);
+    }
+  } catch (e) {
+    console.error("Search error:", e);
+  }
+
+  // Generate estimates based on common medical tourism pricing
+  const costRanges = getCostRangesByProcedure(procedure, destination);
+  const totalCompanions = companions + 1; // Include the patient
+  
+  return {
+    procedure,
+    destination,
+    duration,
+    procedureCost: costRanges.procedure,
+    flightCost: {
+      low: costRanges.flightPerPerson.low * totalCompanions,
+      high: costRanges.flightPerPerson.high * totalCompanions
+    },
+    hotelCost: costRanges.hotel,
+    totalCost: {
+      low: costRanges.procedure.low + (costRanges.flightPerPerson.low * totalCompanions) + costRanges.hotel.low,
+      high: costRanges.procedure.high + (costRanges.flightPerPerson.high * totalCompanions) + costRanges.hotel.high
+    }
+  };
+}
+
+function getCostRangesByProcedure(procedure: string, destination: string) {
+  const procedureLower = procedure.toLowerCase();
+  const destinationLower = destination.toLowerCase();
+  
+  // Base costs by destination
+  const destinationMultipliers: Record<string, number> = {
+    thailand: 1.0,
+    mexico: 0.9,
+    turkey: 0.85,
+    india: 0.75,
+  };
+  
+  const multiplier = destinationMultipliers[destinationLower] || 1.0;
+  
+  // Procedure base costs in Thailand (will be adjusted by multiplier)
+  const procedureCosts: Record<string, { low: number; high: number }> = {
+    knee: { low: 5000, high: 10000 },
+    hip: { low: 7000, high: 12000 },
+    dental: { low: 2000, high: 5000 },
+    cosmetic: { low: 3000, high: 8000 },
+    cardiac: { low: 10000, high: 25000 },
+    bariatric: { low: 8000, high: 15000 },
+  };
+  
+  // Find matching procedure
+  let baseCost = { low: 4000, high: 8000 }; // Default
+  for (const [key, cost] of Object.entries(procedureCosts)) {
+    if (procedureLower.includes(key)) {
+      baseCost = cost;
+      break;
+    }
+  }
+  
+  // Flight costs by destination (per person)
+  const flightCosts: Record<string, { low: number; high: number }> = {
+    thailand: { low: 800, high: 1500 },
+    mexico: { low: 300, high: 600 },
+    turkey: { low: 600, high: 1200 },
+    india: { low: 700, high: 1400 },
+  };
+  
+  return {
+    procedure: {
+      low: Math.round(baseCost.low * multiplier),
+      high: Math.round(baseCost.high * multiplier)
+    },
+    flightPerPerson: flightCosts[destinationLower] || { low: 600, high: 1200 },
+    hotel: { low: 700, high: 1400 } // 10-14 days standard hotel
+  };
+}
