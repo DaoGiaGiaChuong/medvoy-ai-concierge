@@ -35,87 +35,49 @@ const Explore = () => {
   const loadHospitals = async () => {
     setLoading(true);
     try {
-      // Call AI to generate hospital suggestions with Freepik images
-      const { data, error } = await supabase.functions.invoke("generate-hospital-options", {
-        body: { procedure, country, priceRange },
+      // Fetch real JCI-accredited hospitals from database
+      const { data, error } = await supabase.functions.invoke("fetch-hospitals", {
+        body: { 
+          procedure: procedure !== "all" ? procedure : undefined, 
+          country: country !== "all" ? country : undefined, 
+          priceRange: priceRange !== "all" ? priceRange : undefined 
+        },
       });
 
       if (error) throw error;
 
-      if (data?.hospitals) {
-        setHospitals(data.hospitals);
+      if (data?.hospitals && data.hospitals.length > 0) {
+        setHospitals(data.hospitals.map((h: any) => ({
+          id: h.id,
+          name: h.name,
+          location: h.location,
+          country: h.country,
+          priceRange: h.price_range,
+          rating: h.rating,
+          imageUrl: h.image_url,
+          accreditation: h.accreditation_info || "JCI Accredited",
+        })));
+      } else {
+        // No hospitals found with current filters
+        setHospitals([]);
+        toast({
+          title: "No hospitals found",
+          description: "Try adjusting your filters to see more options.",
+        });
       }
     } catch (error: any) {
       console.error("Error loading hospitals:", error);
-      // Load demo data as fallback
-      setHospitals(getDemoHospitals());
+      toast({
+        title: "Error loading hospitals",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+      setHospitals([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const getDemoHospitals = (): Hospital[] => [
-    {
-      id: "1",
-      name: "Bangkok International Hospital",
-      location: "Bangkok, Thailand",
-      country: "Thailand",
-      priceRange: "mid-range",
-      rating: 4.7,
-      imageUrl: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800",
-      accreditation: "JCI Accredited",
-    },
-    {
-      id: "2",
-      name: "Bumrungrad International",
-      location: "Bangkok, Thailand",
-      country: "Thailand",
-      priceRange: "premium",
-      rating: 4.9,
-      imageUrl: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800",
-      accreditation: "JCI Accredited",
-    },
-    {
-      id: "3",
-      name: "Hospital Angeles Tijuana",
-      location: "Tijuana, Mexico",
-      country: "Mexico",
-      priceRange: "budget",
-      rating: 4.5,
-      imageUrl: "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=800",
-      accreditation: "JCI Accredited",
-    },
-    {
-      id: "4",
-      name: "Medica Sur",
-      location: "Mexico City, Mexico",
-      country: "Mexico",
-      priceRange: "mid-range",
-      rating: 4.6,
-      imageUrl: "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=800",
-      accreditation: "JCI Accredited",
-    },
-    {
-      id: "5",
-      name: "Memorial Ankara Hospital",
-      location: "Ankara, Turkey",
-      country: "Turkey",
-      priceRange: "budget",
-      rating: 4.4,
-      imageUrl: "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?w=800",
-      accreditation: "JCI Accredited",
-    },
-    {
-      id: "6",
-      name: "Acibadem Maslak Hospital",
-      location: "Istanbul, Turkey",
-      country: "Turkey",
-      priceRange: "mid-range",
-      rating: 4.8,
-      imageUrl: "https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=800",
-      accreditation: "JCI Accredited",
-    },
-  ];
 
   const getPriceRangeBadgeColor = (range: string) => {
     switch (range) {
