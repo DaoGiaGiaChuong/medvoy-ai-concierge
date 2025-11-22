@@ -8,9 +8,10 @@ import { Option } from "./OptionCard";
 interface ChatMessageProps {
   message: Message;
   conversationId: string | null;
+  onOptionSelect?: (option: Option) => void;
 }
 
-const ChatMessage = ({ message, conversationId }: ChatMessageProps) => {
+const ChatMessage = ({ message, conversationId, onOptionSelect }: ChatMessageProps) => {
   const navigate = useNavigate();
 
   const handleOptionSelect = (option: Option) => {
@@ -18,6 +19,10 @@ const ChatMessage = ({ message, conversationId }: ChatMessageProps) => {
     const isHospital = option.id.length > 10 && option.id.includes("-");
     
     if (isHospital) {
+      // Notify the chat about the selection
+      if (onOptionSelect) {
+        onOptionSelect(option);
+      }
       // Navigate to hospital detail page to see costs
       navigate(`/hospital/${option.id}`);
     }
