@@ -187,7 +187,8 @@ serve(async (req) => {
                   );
 
                   if (hospitalsResponse.ok) {
-                    const hospitals = await hospitalsResponse.json();
+                    const data = await hospitalsResponse.json();
+                    const hospitals = data.hospitals || [];
                     console.log("Generated hospitals:", hospitals.length);
                     
                     const options = hospitals.map((h: any) => ({
@@ -238,7 +239,8 @@ serve(async (req) => {
                       );
 
                       if (hospitalsResponse.ok) {
-                        const hospitals = await hospitalsResponse.json();
+                        const data = await hospitalsResponse.json();
+                        const hospitals = data.hospitals || [];
                         console.log("Generated hospitals:", hospitals.length);
                         
                         const options = hospitals.map((h: any) => ({
