@@ -32,6 +32,40 @@ const HOSPITAL_OPTIONS_TOOL = {
   }
 };
 
+const FLIGHT_SEARCH_TOOL = {
+  type: "function",
+  function: {
+    name: "search_flights",
+    description: "Search for flights to the medical destination. Use this after the patient has selected a hospital and needs flight options.",
+    parameters: {
+      type: "object",
+      properties: {
+        origin: {
+          type: "string",
+          description: "Origin city or country (e.g., 'New York', 'USA', 'London')"
+        },
+        destination: {
+          type: "string",
+          description: "Destination city or country based on hospital location"
+        },
+        departureDate: {
+          type: "string",
+          description: "Preferred departure date (YYYY-MM-DD format)"
+        },
+        returnDate: {
+          type: "string",
+          description: "Preferred return date (YYYY-MM-DD format)"
+        },
+        passengers: {
+          type: "number",
+          description: "Number of passengers (default: 1)"
+        }
+      },
+      required: ["origin", "destination", "departureDate"]
+    }
+  }
+};
+
 const MEDVOY_SYSTEM_PROMPT = `You are MedVoy AI Concierge, a specialized assistant for medical tourism. Your role is to help patients find the best hospitals and medical facilities abroad for their needs.
 
 Key capabilities:
@@ -39,6 +73,7 @@ Key capabilities:
 - Recommend hospitals based on location, budget, and specialization
 - Provide cost estimates and comparisons
 - Explain accreditations and quality standards
+- Search and book flights to medical destinations
 - Assist with travel and accommodation planning
 - Answer questions about medical tourism process
 
@@ -120,7 +155,7 @@ serve(async (req) => {
           { role: "system", content: MEDVOY_SYSTEM_PROMPT },
           ...messages,
         ],
-        tools: [HOSPITAL_OPTIONS_TOOL],
+        tools: [HOSPITAL_OPTIONS_TOOL, FLIGHT_SEARCH_TOOL],
         stream: true,
       }),
     });
@@ -169,47 +204,83 @@ serve(async (req) => {
             const { done, value } = await reader.read();
             if (done) {
               // If we have a complete tool call at end, execute it
-              if (isCollectingToolCall && toolCallBuffer.name === "generate_hospital_options") {
+              if (isCollectingToolCall) {
                 try {
                   const args = JSON.parse(toolCallBuffer.arguments);
-                  console.log("Executing tool call:", args);
+                  console.log("Executing tool call:", toolCallBuffer.name, args);
                   
-                  const hospitalsResponse = await fetch(
-                    `${Deno.env.get('SUPABASE_URL')}/functions/v1/fetch-hospitals`,
-                    {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-                      },
-                      body: JSON.stringify({
-                        ...args,
-                        forceRefresh: true, // Always get fresh data from web
-                      }),
+                  if (toolCallBuffer.name === "generate_hospital_options") {
+                    const hospitalsResponse = await fetch(
+                      `${Deno.env.get('SUPABASE_URL')}/functions/v1/fetch-hospitals`,
+                      {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                        },
+                        body: JSON.stringify({
+                          ...args,
+                          forceRefresh: true,
+                        }),
+                      }
+                    );
+
+                    if (hospitalsResponse.ok) {
+                      const data = await hospitalsResponse.json();
+                      const hospitals = data.hospitals || [];
+                      console.log("Generated hospitals:", hospitals.length);
+                      
+                      const options = hospitals.map((h: any) => ({
+                        id: h.id,
+                        title: h.name,
+                        description: `${h.location} • ${h.accreditation_info} • Rating: ${h.rating}/5`,
+                        price: h.price_range,
+                        imageUrl: h.image_url,
+                        badge: h.accreditation_info,
+                        contact_email: h.contact_email,
+                        estimated_cost_low: h.estimated_cost_low,
+                        estimated_cost_high: h.estimated_cost_high,
+                      }));
+
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                        type: "options",
+                        options: options
+                      })}\n\n`));
                     }
-                  );
+                  } else if (toolCallBuffer.name === "search_flights") {
+                    const flightResponse = await fetch(
+                      `${Deno.env.get('SUPABASE_URL')}/functions/v1/flight-search`,
+                      {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                        },
+                        body: JSON.stringify(args),
+                      }
+                    );
 
-                  if (hospitalsResponse.ok) {
-                    const data = await hospitalsResponse.json();
-                    const hospitals = data.hospitals || [];
-                    console.log("Generated hospitals:", hospitals.length);
-                    
-                    const options = hospitals.map((h: any) => ({
-                      id: h.id,
-                      title: h.name,
-                      description: `${h.location} • ${h.accreditation_info} • Rating: ${h.rating}/5`,
-                      price: h.price_range,
-                      imageUrl: h.image_url,
-                      badge: h.accreditation_info,
-                      contact_email: h.contact_email,
-                      estimated_cost_low: h.estimated_cost_low,
-                      estimated_cost_high: h.estimated_cost_high,
-                    }));
+                    if (flightResponse.ok) {
+                      const data = await flightResponse.json();
+                      const flights = data.flights || [];
+                      console.log("Generated flights:", flights.length);
+                      
+                      const options = flights.map((f: any) => ({
+                        id: f.id,
+                        title: `${f.airline} ${f.logo}`,
+                        description: `${f.origin} → ${f.destination} • ${f.duration} • ${f.stops}`,
+                        price: `$${f.price}`,
+                        imageUrl: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400',
+                        badge: f.stops,
+                        details: `Depart: ${f.departureTime} • Arrive: ${f.arrivalTime}`,
+                        bookingUrl: f.bookingUrl,
+                      }));
 
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                      type: "options",
-                      options: options
-                    })}\n\n`));
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                        type: "options",
+                        options: options
+                      })}\n\n`));
+                    }
                   }
                 } catch (e) {
                   console.error('Tool execution error:', e);
@@ -227,47 +298,83 @@ serve(async (req) => {
                 const data = line.slice(6);
                 if (data === "[DONE]") {
                   // Execute tool call if we have one before sending DONE
-                  if (isCollectingToolCall && toolCallBuffer.name === "generate_hospital_options") {
+                  if (isCollectingToolCall) {
                     try {
                       const args = JSON.parse(toolCallBuffer.arguments);
-                      console.log("Executing tool call:", args);
+                      console.log("Executing tool call:", toolCallBuffer.name, args);
                       
-                      const hospitalsResponse = await fetch(
-                        `${Deno.env.get('SUPABASE_URL')}/functions/v1/fetch-hospitals`,
-                        {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-                          },
-                          body: JSON.stringify({
-                            ...args,
-                            forceRefresh: true, // Always get fresh data from web
-                          }),
+                      if (toolCallBuffer.name === "generate_hospital_options") {
+                        const hospitalsResponse = await fetch(
+                          `${Deno.env.get('SUPABASE_URL')}/functions/v1/fetch-hospitals`,
+                          {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                            },
+                            body: JSON.stringify({
+                              ...args,
+                              forceRefresh: true,
+                            }),
+                          }
+                        );
+
+                        if (hospitalsResponse.ok) {
+                          const data = await hospitalsResponse.json();
+                          const hospitals = data.hospitals || [];
+                          console.log("Generated hospitals:", hospitals.length);
+                          
+                          const options = hospitals.map((h: any) => ({
+                            id: h.id,
+                            title: h.name,
+                            description: `${h.location} • ${h.accreditation_info} • Rating: ${h.rating}/5`,
+                            price: h.price_range,
+                            imageUrl: h.image_url,
+                            badge: h.accreditation_info,
+                            contact_email: h.contact_email,
+                            estimated_cost_low: h.estimated_cost_low,
+                            estimated_cost_high: h.estimated_cost_high,
+                          }));
+
+                          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                            type: "options",
+                            options: options
+                          })}\n\n`));
                         }
-                      );
+                      } else if (toolCallBuffer.name === "search_flights") {
+                        const flightResponse = await fetch(
+                          `${Deno.env.get('SUPABASE_URL')}/functions/v1/flight-search`,
+                          {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                            },
+                            body: JSON.stringify(args),
+                          }
+                        );
 
-                      if (hospitalsResponse.ok) {
-                        const data = await hospitalsResponse.json();
-                        const hospitals = data.hospitals || [];
-                        console.log("Generated hospitals:", hospitals.length);
-                        
-                        const options = hospitals.map((h: any) => ({
-                          id: h.id,
-                          title: h.name,
-                          description: `${h.location} • ${h.accreditation_info} • Rating: ${h.rating}/5`,
-                          price: h.price_range,
-                          imageUrl: h.image_url,
-                          badge: h.accreditation_info,
-                          contact_email: h.contact_email,
-                          estimated_cost_low: h.estimated_cost_low,
-                          estimated_cost_high: h.estimated_cost_high,
-                        }));
+                        if (flightResponse.ok) {
+                          const data = await flightResponse.json();
+                          const flights = data.flights || [];
+                          console.log("Generated flights:", flights.length);
+                          
+                          const options = flights.map((f: any) => ({
+                            id: f.id,
+                            title: `${f.airline} ${f.logo}`,
+                            description: `${f.origin} → ${f.destination} • ${f.duration} • ${f.stops}`,
+                            price: `$${f.price}`,
+                            imageUrl: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400',
+                            badge: f.stops,
+                            details: `Depart: ${f.departureTime} • Arrive: ${f.arrivalTime}`,
+                            bookingUrl: f.bookingUrl,
+                          }));
 
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                          type: "options",
-                          options: options
-                        })}\n\n`));
+                          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                            type: "options",
+                            options: options
+                          })}\n\n`));
+                        }
                       }
                     } catch (e) {
                       console.error('Tool execution error:', e);
