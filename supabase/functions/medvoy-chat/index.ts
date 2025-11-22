@@ -175,14 +175,17 @@ serve(async (req) => {
                   console.log("Executing tool call:", args);
                   
                   const hospitalsResponse = await fetch(
-                    `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-hospital-options`,
+                    `${Deno.env.get('SUPABASE_URL')}/functions/v1/fetch-hospitals`,
                     {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
                       },
-                      body: JSON.stringify(args),
+                      body: JSON.stringify({
+                        ...args,
+                        forceRefresh: true, // Always get fresh data from web
+                      }),
                     }
                   );
 
@@ -194,10 +197,13 @@ serve(async (req) => {
                     const options = hospitals.map((h: any) => ({
                       id: h.id,
                       title: h.name,
-                      description: `${h.location} • ${h.accreditation} • Rating: ${h.rating}/5`,
-                      price: h.priceRange,
-                      imageUrl: h.imageUrl,
-                      badge: h.accreditation
+                      description: `${h.location} • ${h.accreditation_info} • Rating: ${h.rating}/5`,
+                      price: h.price_range,
+                      imageUrl: h.image_url,
+                      badge: h.accreditation_info,
+                      contact_email: h.contact_email,
+                      estimated_cost_low: h.estimated_cost_low,
+                      estimated_cost_high: h.estimated_cost_high,
                     }));
 
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({
@@ -227,14 +233,17 @@ serve(async (req) => {
                       console.log("Executing tool call:", args);
                       
                       const hospitalsResponse = await fetch(
-                        `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-hospital-options`,
+                        `${Deno.env.get('SUPABASE_URL')}/functions/v1/fetch-hospitals`,
                         {
                           method: 'POST',
                           headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
                           },
-                          body: JSON.stringify(args),
+                          body: JSON.stringify({
+                            ...args,
+                            forceRefresh: true, // Always get fresh data from web
+                          }),
                         }
                       );
 
@@ -246,10 +255,13 @@ serve(async (req) => {
                         const options = hospitals.map((h: any) => ({
                           id: h.id,
                           title: h.name,
-                          description: `${h.location} • ${h.accreditation} • Rating: ${h.rating}/5`,
-                          price: h.priceRange,
-                          imageUrl: h.imageUrl,
-                          badge: h.accreditation
+                          description: `${h.location} • ${h.accreditation_info} • Rating: ${h.rating}/5`,
+                          price: h.price_range,
+                          imageUrl: h.image_url,
+                          badge: h.accreditation_info,
+                          contact_email: h.contact_email,
+                          estimated_cost_low: h.estimated_cost_low,
+                          estimated_cost_high: h.estimated_cost_high,
                         }));
 
                         controller.enqueue(encoder.encode(`data: ${JSON.stringify({
