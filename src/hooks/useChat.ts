@@ -89,8 +89,24 @@ export const useChat = (conversationId: string | null) => {
 
             try {
               const parsed = JSON.parse(jsonStr);
+              
+              // Handle special options event from tool call
+              if (parsed.type === "options") {
+                setMessages((prev) => {
+                  const lastMessage = prev[prev.length - 1];
+                  if (lastMessage?.role === "assistant") {
+                    return prev.map((m, i) =>
+                      i === prev.length - 1 
+                        ? { ...m, options: parsed.options } 
+                        : m
+                    );
+                  }
+                  return [...prev, { role: "assistant", content: "", options: parsed.options }];
+                });
+                continue;
+              }
+              
               const content = parsed.choices?.[0]?.delta?.content;
-              const options = parsed.choices?.[0]?.delta?.options;
               
               if (content) {
                 assistantContent += content;
@@ -101,15 +117,11 @@ export const useChat = (conversationId: string | null) => {
                 if (lastMessage?.role === "assistant") {
                   return prev.map((m, i) =>
                     i === prev.length - 1 
-                      ? { 
-                          ...m, 
-                          content: assistantContent, 
-                          options: options || m.options
-                        } 
+                      ? { ...m, content: assistantContent } 
                       : m
                   );
                 }
-                return [...prev, { role: "assistant", content: assistantContent, options }];
+                return [...prev, { role: "assistant", content: assistantContent }];
               });
             } catch (parseError) {
               console.error("Parse error:", parseError);
