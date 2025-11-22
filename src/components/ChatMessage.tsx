@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import OptionsGrid from "./OptionsGrid";
 import { Option } from "./OptionCard";
+import ConsultationDialog from "./ConsultationDialog";
 
 interface ChatMessageProps {
   message: Message;
@@ -13,18 +14,25 @@ interface ChatMessageProps {
 
 const ChatMessage = ({ message, conversationId, onOptionSelect }: ChatMessageProps) => {
   const navigate = useNavigate();
+  const [showConsultation, setShowConsultation] = useState(false);
+  const [selectedHospital, setSelectedHospital] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const handleOptionSelect = (option: Option) => {
     // Check if this is a hospital option (has id that looks like a UUID)
     const isHospital = option.id.length > 10 && option.id.includes("-");
     
     if (isHospital) {
+      // Show consultation dialog
+      setSelectedHospital({ id: option.id, name: option.title });
+      setShowConsultation(true);
+      
       // Notify the chat about the selection
       if (onOptionSelect) {
         onOptionSelect(option);
       }
-      // Navigate to hospital detail page to see costs
-      navigate(`/hospital/${option.id}`);
     }
   };
 
@@ -54,6 +62,15 @@ const ChatMessage = ({ message, conversationId, onOptionSelect }: ChatMessagePro
             onSelectOption={handleOptionSelect}
           />
         </div>
+      )}
+      {selectedHospital && (
+        <ConsultationDialog
+          open={showConsultation}
+          onOpenChange={setShowConsultation}
+          hospitalId={selectedHospital.id}
+          hospitalName={selectedHospital.name}
+          conversationId={conversationId}
+        />
       )}
     </div>
   );

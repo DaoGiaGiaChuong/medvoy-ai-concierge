@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -9,10 +8,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
 
 interface ConsultationDialogProps {
   open: boolean;
@@ -29,39 +29,39 @@ const ConsultationDialog = ({
   hospitalName,
   conversationId,
 }: ConsultationDialogProps) => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
 
     try {
-      // Save consultation inquiry (HIPAA compliant - no PHI)
-      const { error } = await supabase
-        .from("customer_inquiries")
-        .insert({
-          email: email.trim().toLowerCase(),
-          hospital_id: hospitalId,
-          inquiry_type: "consultation",
-          conversation_id: conversationId,
-          status: "pending",
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be signed in to submit an inquiry",
+          variant: "destructive",
         });
+        return;
+      }
+
+      const { error } = await supabase.from("booking_inquiries").insert({
+        user_id: user.id,
+        conversation_id: conversationId,
+        hospital_id: hospitalId,
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim() || null,
+        message: message.trim(),
+      });
 
       if (error) throw error;
 
@@ -69,15 +69,18 @@ const ConsultationDialog = ({
       
       toast({
         title: "Request Submitted",
-        description: "We'll contact you within 24 hours with more details.",
+        description: `Your consultation request for ${hospitalName} has been sent. They will contact you soon.`,
       });
 
       // Reset after 2 seconds and close
       setTimeout(() => {
+        setName("");
         setEmail("");
+        setPhone("");
+        setMessage("");
         setSubmitted(false);
         onOpenChange(false);
-      }, 2000);
+      }, 2500);
     } catch (error: any) {
       console.error("Error submitting inquiry:", error);
       toast({
@@ -92,68 +95,79 @@ const ConsultationDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[500px]">
         {!submitted ? (
           <>
             <DialogHeader>
-              <DialogTitle className="text-xl">Request Consultation</DialogTitle>
+              <DialogTitle>Request Consultation</DialogTitle>
               <DialogDescription>
-                Interested in <span className="font-semibold text-foreground">{hospitalName}</span>? 
-                Provide your email and we'll get back to you within 24 hours with personalized details.
+                Send a consultation request to {hospitalName}. They will contact you directly with pricing and availability.
               </DialogDescription>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Your privacy is protected. We comply with HIPAA regulations.
-                </p>
+                <Label htmlFor="name">Full Name *</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  placeholder="John Doe"
+                  disabled={loading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="john@example.com"
+                  disabled={loading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+1 (555) 123-4567"
+                  disabled={loading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="message">Message *</Label>
+                <Textarea
+                  id="message"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  required
+                  placeholder="Please provide details about your medical needs, preferred dates, and any questions..."
+                  rows={4}
+                  disabled={loading}
+                />
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-3 justify-end">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => onOpenChange(false)}
                   disabled={loading}
-                  className="flex-1"
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={loading || !email}
-                  className="flex-1"
-                >
-                  {loading ? "Submitting..." : "Submit Request"}
-                </Button>
-              </div>
-
-              <div className="pt-2 border-t">
-                <Button
-                  type="button"
-                  variant="link"
-                  onClick={() => {
-                    onOpenChange(false);
-                    navigate(`/hospital/${hospitalId}`);
-                  }}
-                  className="w-full text-sm"
-                >
-                  View Hospital Details
+                <Button type="submit" disabled={loading || !name || !email || !message}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {loading ? "Sending..." : "Send Request"}
                 </Button>
               </div>
             </form>
@@ -161,11 +175,11 @@ const ConsultationDialog = ({
         ) : (
           <div className="text-center py-8">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
+            <h3 className="text-lg font-semibold mb-2">
               Request Submitted!
             </h3>
             <p className="text-sm text-muted-foreground">
-              We'll contact you at {email} within 24 hours.
+              {hospitalName} will contact you at {email} within 24-48 hours.
             </p>
           </div>
         )}
