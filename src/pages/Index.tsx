@@ -279,6 +279,7 @@ const Index = () => {
             key={message.id || index} 
             message={message}
             conversationId={conversationId}
+            onOptionSelect={handleOptionSelect}
           />
         ))}
         {isLoading && (
