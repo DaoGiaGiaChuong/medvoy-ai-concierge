@@ -18,7 +18,7 @@ const ChatMessage = ({ message, conversationId }: ChatMessageProps) => {
     const isHospital = option.id.length > 10 && option.id.includes("-");
     
     if (isHospital) {
-      // Navigate to hospital detail page
+      // Navigate to hospital detail page to see costs
       navigate(`/hospital/${option.id}`);
     }
   };

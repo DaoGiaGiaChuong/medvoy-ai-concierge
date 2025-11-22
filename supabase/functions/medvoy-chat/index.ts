@@ -5,7 +5,58 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MEDVOY_SYSTEM_PROMPT = `You are MedVoy AI Concierge, an AI medical-tourism assistant that helps users find and connect with quality medical facilities worldwide.
+const HOSPITAL_OPTIONS_TOOL = {
+  type: "function",
+  function: {
+    name: "generate_hospital_options",
+    description: "Generate a list of hospital recommendations based on patient requirements. Use this when you have gathered enough information about the procedure, location preferences, and budget.",
+    parameters: {
+      type: "object",
+      properties: {
+        procedure: {
+          type: "string",
+          description: "The medical procedure or treatment the patient needs (e.g., 'knee replacement', 'dental implants', 'heart surgery')"
+        },
+        country: {
+          type: "string",
+          description: "Preferred country or region (e.g., 'Thailand', 'Singapore', 'India', 'Turkey')"
+        },
+        priceRange: {
+          type: "string",
+          enum: ["budget", "mid-range", "premium"],
+          description: "Patient's budget level: budget (<$5k), mid-range ($5k-$15k), or premium (>$15k)"
+        }
+      },
+      required: ["procedure", "country", "priceRange"]
+    }
+  }
+};
+
+const MEDVOY_SYSTEM_PROMPT = `You are MedVoy AI Concierge, a specialized assistant for medical tourism. Your role is to help patients find the best hospitals and medical facilities abroad for their needs.
+
+Key capabilities:
+- Understand patient medical needs and procedures
+- Recommend hospitals based on location, budget, and specialization
+- Provide cost estimates and comparisons
+- Explain accreditations and quality standards
+- Assist with travel and accommodation planning
+- Answer questions about medical tourism process
+
+Conversation guidelines:
+- Be empathetic and professional
+- Ask clarifying questions to gather: procedure type, preferred country/region, and budget range
+- Once you have enough information (procedure, country, and budget), use the generate_hospital_options tool to provide specific hospital recommendations
+- Explain medical terms in simple language
+- Always prioritize patient safety and quality care
+- Mention relevant accreditations (JCI, ISO, etc.)
+
+When discussing costs:
+- Provide ranges rather than exact figures
+- Mention what's typically included/excluded
+- Compare with home country costs when relevant
+- After user selects a hospital, provide detailed cost breakdown
+
+Remember: You're a guide, not a medical professional. Always recommend consulting with qualified healthcare providers for medical advice.
 
 Your capabilities:
 - Help users explore medical tourism options
@@ -69,6 +120,7 @@ serve(async (req) => {
           { role: "system", content: MEDVOY_SYSTEM_PROMPT },
           ...messages,
         ],
+        tools: [HOSPITAL_OPTIONS_TOOL],
         stream: true,
       }),
     });
@@ -105,6 +157,8 @@ serve(async (req) => {
 
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
+    let toolCallBuffer = { name: "", arguments: "" };
+    let isCollectingToolCall = false;
     
     const stream = new ReadableStream({
       async start(controller) {
@@ -113,7 +167,49 @@ serve(async (req) => {
         try {
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              // If we have a complete tool call at end, execute it
+              if (isCollectingToolCall && toolCallBuffer.name === "generate_hospital_options") {
+                try {
+                  const args = JSON.parse(toolCallBuffer.arguments);
+                  console.log("Executing tool call:", args);
+                  
+                  const hospitalsResponse = await fetch(
+                    `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-hospital-options`,
+                    {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                      },
+                      body: JSON.stringify(args),
+                    }
+                  );
+
+                  if (hospitalsResponse.ok) {
+                    const hospitals = await hospitalsResponse.json();
+                    console.log("Generated hospitals:", hospitals.length);
+                    
+                    const options = hospitals.map((h: any) => ({
+                      id: h.id,
+                      title: h.name,
+                      description: `${h.location} • ${h.accreditation} • Rating: ${h.rating}/5`,
+                      price: h.priceRange,
+                      imageUrl: h.imageUrl,
+                      badge: h.accreditation
+                    }));
+
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                      type: "options",
+                      options: options
+                    })}\n\n`));
+                  }
+                } catch (e) {
+                  console.error('Tool execution error:', e);
+                }
+              }
+              break;
+            }
             
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split("\n");
@@ -123,6 +219,47 @@ serve(async (req) => {
               if (line.startsWith("data: ")) {
                 const data = line.slice(6);
                 if (data === "[DONE]") {
+                  // Execute tool call if we have one before sending DONE
+                  if (isCollectingToolCall && toolCallBuffer.name === "generate_hospital_options") {
+                    try {
+                      const args = JSON.parse(toolCallBuffer.arguments);
+                      console.log("Executing tool call:", args);
+                      
+                      const hospitalsResponse = await fetch(
+                        `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-hospital-options`,
+                        {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                          },
+                          body: JSON.stringify(args),
+                        }
+                      );
+
+                      if (hospitalsResponse.ok) {
+                        const hospitals = await hospitalsResponse.json();
+                        console.log("Generated hospitals:", hospitals.length);
+                        
+                        const options = hospitals.map((h: any) => ({
+                          id: h.id,
+                          title: h.name,
+                          description: `${h.location} • ${h.accreditation} • Rating: ${h.rating}/5`,
+                          price: h.priceRange,
+                          imageUrl: h.imageUrl,
+                          badge: h.accreditation
+                        }));
+
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                          type: "options",
+                          options: options
+                        })}\n\n`));
+                      }
+                    } catch (e) {
+                      console.error('Tool execution error:', e);
+                    }
+                  }
+                  
                   controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
                   continue;
                 }
@@ -130,6 +267,23 @@ serve(async (req) => {
                 try {
                   const parsed = JSON.parse(data);
                   const delta = parsed.choices?.[0]?.delta;
+                  
+                  // Check for tool calls
+                  const toolCalls = delta?.tool_calls;
+                  if (toolCalls && toolCalls.length > 0) {
+                    const toolCall = toolCalls[0];
+                    if (toolCall.function) {
+                      isCollectingToolCall = true;
+                      if (toolCall.function.name) {
+                        toolCallBuffer.name = toolCall.function.name;
+                      }
+                      if (toolCall.function.arguments) {
+                        toolCallBuffer.arguments += toolCall.function.arguments;
+                      }
+                    }
+                    // Don't forward tool call chunks to client
+                    continue;
+                  }
                   
                   // Forward content to client
                   if (delta?.content) {
