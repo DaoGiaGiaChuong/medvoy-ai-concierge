@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.fetch-hospitals]
 verify_jwt = false
+
+[functions.flight-search]
+verify_jwt = false
