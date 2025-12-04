@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Star, Award, MessageSquare, Home, Search, Heart, User } from "lucide-react";
+import { MapPin, Star, Award, MessageSquare, Home, Search, Heart, User, FileText, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
+import BookingRequestModal from "@/components/booking/BookingRequestModal";
 
 interface Hospital {
   id: string;
@@ -31,6 +32,8 @@ const Explore = () => {
   const [expandedHospital, setExpandedHospital] = useState<string | null>(null);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [selectedHospitalForBooking, setSelectedHospitalForBooking] = useState<string | undefined>();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -203,6 +206,12 @@ const Explore = () => {
               <MessageSquare className="mr-2 h-4 w-4" />
               Chat
             </Button>
+            {user && (
+              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+                <FileText className="mr-2 h-4 w-4" />
+                My Requests
+              </Button>
+            )}
             {user ? (
               <Button variant="ghost" onClick={() => navigate("/profile")}>
                 <User className="mr-2 h-4 w-4" />
@@ -384,6 +393,17 @@ const Explore = () => {
                           <MessageSquare className="h-4 w-4 mr-2" />
                           Ask AI About This Hospital
                         </Button>
+                        <Button 
+                          variant="secondary"
+                          className="w-full mt-2"
+                          onClick={() => {
+                            setSelectedHospitalForBooking(hospital.id);
+                            setBookingModalOpen(true);
+                          }}
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          Request Quote
+                        </Button>
                       </div>
                     )}
 
@@ -394,6 +414,16 @@ const Explore = () => {
                         onClick={() => setExpandedHospital(isExpanded ? null : hospital.id)}
                       >
                         {isExpanded ? "Hide Details" : "View Details"}
+                      </Button>
+                      <Button
+                        size="icon"
+                        onClick={() => {
+                          setSelectedHospitalForBooking(hospital.id);
+                          setBookingModalOpen(true);
+                        }}
+                        title="Request Quote"
+                      >
+                        <Send className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
@@ -413,6 +443,14 @@ const Explore = () => {
           </div>
         )}
       </div>
+
+      {/* Request Quote Modal */}
+      <BookingRequestModal
+        open={bookingModalOpen}
+        onOpenChange={setBookingModalOpen}
+        hospitals={hospitals.map(h => ({ id: h.id, name: h.name, location: h.location, country: h.country }))}
+        preSelectedHospitalId={selectedHospitalForBooking}
+      />
     </div>
   );
 };
