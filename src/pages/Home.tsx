@@ -61,6 +61,9 @@ const Home = () => {
             <Button variant="ghost" onClick={() => navigate("/chat")}>
               Chat
             </Button>
+            <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+              My Requests
+            </Button>
             <Button onClick={() => navigate("/auth")}>Sign In</Button>
           </div>
         </nav>
