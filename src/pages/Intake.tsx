@@ -171,8 +171,8 @@ const Intake = () => {
         description: "We'll analyze your preferences and send you personalized recommendations.",
       });
 
-      // Navigate to results page with conversation ID
-      navigate(`/chat?conversation=${conversationId}&intake=complete`);
+      // Navigate to cost estimation with procedure and conversation
+      navigate(`/cost-estimate?procedure=${encodeURIComponent(formData.procedure)}&conversation=${conversationId}`);
     } catch (error: any) {
       console.error("Error submitting intake:", error);
       toast({

@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Explore from "./pages/Explore";
 import Intake from "./pages/Intake";
 import Dashboard from "./pages/Dashboard";
+import CostEstimation from "./pages/CostEstimation";
 import HospitalDetail from "./pages/HospitalDetail";
 import Auth from "./pages/Auth";
 import HowItWorks from "./pages/HowItWorks";
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/cost-estimate" element={<CostEstimation />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
