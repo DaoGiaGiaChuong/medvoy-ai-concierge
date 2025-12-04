@@ -275,6 +275,7 @@ const Explore = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All countries</SelectItem>
+                    <SelectItem value="Vietnam">Vietnam</SelectItem>
                     <SelectItem value="thailand">Thailand</SelectItem>
                     <SelectItem value="mexico">Mexico</SelectItem>
                     <SelectItem value="turkey">Turkey</SelectItem>

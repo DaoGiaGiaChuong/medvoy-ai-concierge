@@ -77,9 +77,9 @@ const Home = () => {
             From discovery to recovery, MedVoy AI creates, communicates, and executes your entire medical tourism plan with safe, accredited hospitals worldwide.
           </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" onClick={() => navigate("/chat")}>
+            <Button size="lg" onClick={() => navigate("/intake")}>
               <MessageSquare className="mr-2 h-5 w-5" />
-              Start Planning
+              Start Free Consultation
             </Button>
             <Button size="lg" variant="outline" onClick={() => navigate("/explore")}>
               <Search className="mr-2 h-5 w-5" />
@@ -202,9 +202,9 @@ const Home = () => {
             Get personalized recommendations and transparent cost estimates in minutes
           </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" onClick={() => navigate("/chat")}>
+            <Button size="lg" onClick={() => navigate("/intake")}>
               <MessageSquare className="mr-2 h-5 w-5" />
-              Chat with AI Concierge
+              Start Free Consultation
             </Button>
             <Button size="lg" variant="outline" onClick={() => navigate("/explore")}>
               <Search className="mr-2 h-5 w-5" />
